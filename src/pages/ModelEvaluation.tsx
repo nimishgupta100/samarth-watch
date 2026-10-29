@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useToast } from '../context/ToastContext';
 import { 
   MODEL_COMPARISON, 
   PRECISION_AT_K_CURVE, 
@@ -17,33 +19,35 @@ import {
   Legend 
 } from 'recharts';
 import { 
-  Sparkles, 
   Award, 
   CheckCircle2, 
   AlertTriangle, 
   Layers, 
   Coins, 
-  Clock, 
-  Info, 
-  ArrowRight,
-  TrendingUp,
-  Cpu,
-  ShieldCheck
+  TrendingUp, 
+  Cpu, 
 } from 'lucide-react';
 
 export const ModelEvaluation: React.FC = () => {
+  useDocumentTitle('Model Benchmark & Evaluation');
+  const { showToast } = useToast();
   const [selectedArchStep, setSelectedArchStep] = useState(0);
 
+  const onStepSelect = (idx: number, title: string) => {
+    setSelectedArchStep(idx);
+    showToast(`Inspecting Stage ${idx + 1} architecture: ${title}`, 'info');
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-8">
       
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 border border-indigo-900/50 shadow-lg">
+      {/* Header Banner (Solid Navy, NO purple gradients!) */}
+      <div className="bg-slate-900 text-white rounded-2xl p-6 sm:p-8 border border-slate-800 shadow-md">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 bg-indigo-500/20 text-indigo-300 text-xs px-3 py-1 rounded-full border border-indigo-400/30 font-semibold">
-              <Award className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Hackathon Judge Technical Audit • Evaluation & Architecture</span>
+            <div className="inline-flex items-center gap-1.5 bg-teal-500/20 text-teal-300 text-xs px-3 py-1 rounded-md border border-teal-400/30 font-semibold">
+              <Award className="w-3.5 h-3.5 text-teal-400" />
+              <span>Hackathon Judge Technical Audit : Evaluation & Architecture</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
               Model Benchmarking & ML Engineering
@@ -54,23 +58,23 @@ export const ModelEvaluation: React.FC = () => {
           </div>
 
           <div className="flex flex-row md:flex-col items-center md:items-end gap-3 shrink-0">
-            <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 text-right">
+            <div className="bg-slate-800 px-4 py-2 rounded-xl border border-slate-700 text-right">
               <div className="text-[11px] text-slate-300">Days Early Detection</div>
               <div className="text-2xl font-black text-teal-300">5.8 Days</div>
             </div>
-            <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 text-right">
+            <div className="bg-slate-800 px-4 py-2 rounded-xl border border-slate-700 text-right">
               <div className="text-[11px] text-slate-300">Precision @ Top 10</div>
-              <div className="text-2xl font-black text-indigo-300">92.4%</div>
+              <div className="text-2xl font-black text-teal-300">92.4%</div>
             </div>
           </div>
         </div>
       </div>
 
       {/* SECTION 1: Model Comparison Benchmark Table */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
+      <div className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-2xs space-y-4">
         <div>
           <h2 className="text-lg font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-            <Layers className="w-5 h-5 text-indigo-600" />
+            <Layers className="w-5 h-5 text-teal-700" />
             1. Comparative Model Performance Benchmark
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -78,9 +82,9 @@ export const ModelEvaluation: React.FC = () => {
           </p>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-600 uppercase font-bold text-[11px] border-b border-slate-200">
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left text-xs min-w-[650px]">
+            <thead className="bg-slate-50 text-slate-600 uppercase font-bold text-[10px] border-b border-slate-200">
               <tr>
                 <th className="py-3.5 px-4">Model Pipeline</th>
                 <th className="py-3.5 px-4">Precision</th>
@@ -97,13 +101,13 @@ export const ModelEvaluation: React.FC = () => {
                 return (
                   <tr 
                     key={idx} 
-                    className={isHybrid ? 'bg-indigo-50/50 font-bold border-l-4 border-l-indigo-600' : 'hover:bg-slate-50'}
+                    className={isHybrid ? 'bg-teal-50/60 font-bold border-l-4 border-l-teal-700' : 'hover:bg-slate-50'}
                   >
                     <td className="py-4 px-4">
                       <div className="text-slate-900 text-sm font-bold flex items-center gap-1.5">
                         {row.modelName}
                         {isHybrid && (
-                          <span className="bg-indigo-600 text-white text-[10px] uppercase font-bold px-1.5 py-0.2 rounded">
+                          <span className="bg-teal-700 text-white text-[10px] uppercase font-bold px-1.5 py-0.2 rounded">
                             Production
                           </span>
                         )}
@@ -132,10 +136,10 @@ export const ModelEvaluation: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* Precision-at-k Curve Chart */}
-        <div className="lg:col-span-7 bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
+        <div className="lg:col-span-7 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-2xs space-y-4">
           <div>
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-indigo-600" />
+              <TrendingUp className="w-4 h-4 text-teal-700" />
               2. Precision-at-Top-K Triage Curve
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -150,8 +154,8 @@ export const ModelEvaluation: React.FC = () => {
                 <YAxis domain={[30, 100]} tick={{ fontSize: 11 }} unit="%" />
                 <Tooltip />
                 <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-                <Line type="monotone" dataKey="hybrid" name="Samarth Hybrid Ensemble" stroke="#4F46E5" strokeWidth={3} dot={{ r: 4 }} />
-                <Line type="monotone" dataKey="mlOnly" name="ML Only (Isolation Forest + GBDT)" stroke="#0D9488" strokeWidth={2} strokeDasharray="4 4" />
+                <Line type="monotone" dataKey="hybrid" name="Samarth Hybrid Ensemble" stroke="#0D9488" strokeWidth={3} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="mlOnly" name="ML Only (Isolation Forest + GBDT)" stroke="#1E4F8A" strokeWidth={2} strokeDasharray="4 4" />
                 <Line type="monotone" dataKey="rules" name="Rules Baseline" stroke="#94A3B8" strokeWidth={1.8} />
               </LineChart>
             </ResponsiveContainer>
@@ -162,10 +166,10 @@ export const ModelEvaluation: React.FC = () => {
         </div>
 
         {/* Confusion Matrix on Planted Cases */}
-        <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
+        <div className="lg:col-span-5 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-2xs space-y-4">
           <div>
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-teal-600" />
+              <CheckCircle2 className="w-4 h-4 text-teal-700" />
               3. Confusion Matrix (Planted Cohort N=200)
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -174,47 +178,41 @@ export const ModelEvaluation: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-3 pt-2">
-            
-            {/* True Positive */}
-            <div className="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-4 text-center">
+            <div className="bg-emerald-50 border-2 border-emerald-300 rounded-xl p-4 text-center">
               <div className="text-2xl font-black text-emerald-800">{CONFUSION_MATRIX.truePositives}</div>
               <div className="text-xs font-bold text-emerald-950 mt-1">True Positive (TP)</div>
               <div className="text-[10px] text-emerald-700">Decline caught early in top triage</div>
             </div>
 
-            {/* False Positive */}
-            <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 text-center">
+            <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 text-center">
               <div className="text-2xl font-black text-amber-800">{CONFUSION_MATRIX.falsePositives}</div>
               <div className="text-xs font-bold text-amber-950 mt-1">False Positive (FP)</div>
               <div className="text-[10px] text-amber-700">Transient fluctuation flagged</div>
             </div>
 
-            {/* False Negative */}
-            <div className="bg-red-50 border-2 border-red-300 rounded-2xl p-4 text-center">
+            <div className="bg-red-50 border-2 border-red-300 rounded-xl p-4 text-center">
               <div className="text-2xl font-black text-red-800">{CONFUSION_MATRIX.falseNegatives}</div>
               <div className="text-xs font-bold text-red-950 mt-1">False Negative (FN)</div>
               <div className="text-[10px] text-red-700">Caught later at amber priority</div>
             </div>
 
-            {/* True Negative */}
-            <div className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 text-center">
+            <div className="bg-slate-50 border-2 border-slate-200 rounded-xl p-4 text-center">
               <div className="text-2xl font-black text-slate-800">{CONFUSION_MATRIX.trueNegatives}</div>
               <div className="text-xs font-bold text-slate-950 mt-1">True Negative (TN)</div>
               <div className="text-[10px] text-slate-500">Stable seniors not bothered</div>
             </div>
-
           </div>
 
           <div className="grid grid-cols-3 gap-2 text-center text-xs pt-2">
-            <div className="bg-slate-100 p-2 rounded-xl">
+            <div className="bg-slate-100 p-2 rounded-lg">
               <div className="font-bold text-slate-900">{CONFUSION_MATRIX.calculatedPrecision}</div>
               <div className="text-[10px] text-slate-500">Precision</div>
             </div>
-            <div className="bg-slate-100 p-2 rounded-xl">
+            <div className="bg-slate-100 p-2 rounded-lg">
               <div className="font-bold text-slate-900">{CONFUSION_MATRIX.calculatedRecall}</div>
               <div className="text-[10px] text-slate-500">Recall</div>
             </div>
-            <div className="bg-slate-100 p-2 rounded-xl">
+            <div className="bg-slate-100 p-2 rounded-lg">
               <div className="font-bold text-slate-900">{CONFUSION_MATRIX.specificity}</div>
               <div className="text-[10px] text-slate-500">Specificity</div>
             </div>
@@ -223,11 +221,11 @@ export const ModelEvaluation: React.FC = () => {
 
       </div>
 
-      {/* SECTION 3: System Architecture Flow (Interactive) */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
+      {/* SECTION 3: System Architecture Flow (Interactive, clean slate buttons) */}
+      <div className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-2xs space-y-6">
         <div>
           <h2 className="text-lg font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-            <Cpu className="w-5 h-5 text-indigo-600" />
+            <Cpu className="w-5 h-5 text-teal-700" />
             4. End-to-End System Architecture (How It Works)
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -235,20 +233,19 @@ export const ModelEvaluation: React.FC = () => {
           </p>
         </div>
 
-        {/* Horizontal Pipeline Steps */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
           {ARCHITECTURE_STAGES.map((st, idx) => (
             <button
               key={idx}
-              onClick={() => setSelectedArchStep(idx)}
-              className={`p-3 rounded-2xl text-left border transition-all ${
+              onClick={() => onStepSelect(idx, st.title)}
+              className={`p-3 rounded-xl text-left border transition-all ${
                 selectedArchStep === idx
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-md scale-102'
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-md'
                   : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
               }`}
             >
               <div className={`text-[10px] font-bold uppercase tracking-wider ${
-                selectedArchStep === idx ? 'text-indigo-200' : 'text-slate-400'
+                selectedArchStep === idx ? 'text-teal-400' : 'text-slate-400'
               }`}>
                 Step {st.step}
               </div>
@@ -257,7 +254,6 @@ export const ModelEvaluation: React.FC = () => {
           ))}
         </div>
 
-        {/* Selected Stage Detail Card */}
         <div className="p-6 bg-slate-900 text-white rounded-2xl border border-slate-800 space-y-3">
           <div className="flex items-center justify-between text-xs">
             <span className="font-bold uppercase tracking-wider text-teal-400">
@@ -282,11 +278,11 @@ export const ModelEvaluation: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* Cost Analysis at 10k Scale */}
-        <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
+        <div className="lg:col-span-7 bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-2xs space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Coins className="w-4 h-4 text-emerald-600" />
+                <Coins className="w-4 h-4 text-emerald-700" />
                 5. Cost per Senior per Month (At 10,000 Seniors)
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -299,9 +295,9 @@ export const ModelEvaluation: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto pt-2">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-500 uppercase font-bold text-[10px]">
+          <div className="overflow-x-auto w-full pt-2">
+            <table className="w-full text-left text-xs min-w-[500px]">
+              <thead className="bg-slate-50 text-slate-600 uppercase font-bold text-[10px]">
                 <tr>
                   <th className="py-2.5 px-3">Infrastructure Component</th>
                   <th className="py-2.5 px-3">Provider</th>
@@ -323,8 +319,8 @@ export const ModelEvaluation: React.FC = () => {
           </div>
         </div>
 
-        {/* Transparent Limitations */}
-        <div className="lg:col-span-5 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
+        {/* Limitations */}
+        <div className="lg:col-span-5 bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-2xs space-y-4">
           <div>
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-500" />

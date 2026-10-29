@@ -1,7 +1,7 @@
 import React from 'react';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { 
   OPERATIONS_METRICS, 
-  MODEL_COMPARISON 
 } from '../data/evaluationData';
 import { COORDINATORS } from '../data/mockDataGenerator';
 import { 
@@ -11,43 +11,38 @@ import {
   XAxis, 
   YAxis, 
   Tooltip, 
-  BarChart, 
-  Bar, 
-  Cell, 
   PieChart, 
-  Pie 
+  Pie, 
+  Cell 
 } from 'recharts';
 import { 
   BarChart3, 
-  Clock, 
-  CheckCircle2, 
-  Target, 
   Calendar, 
   Users, 
   TrendingUp, 
   MapPin, 
-  ShieldCheck, 
-  ArrowUpRight 
+  CheckCircle2, 
 } from 'lucide-react';
 
 export const OperationsDashboard: React.FC = () => {
+  useDocumentTitle('Operations Dashboard');
   const metrics = OPERATIONS_METRICS;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-6">
       
       {/* Header */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-xs">
+      <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-2xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-600 mb-1">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-700 mb-1">
               <BarChart3 className="w-3.5 h-3.5" />
               <span>Operations Management & Quality Assurance</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               Operational Health & Triage Analytics
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
               Cross-city oversight across 200 seniors, 4 Care Coordinators, and 350+ cities network capacity.
             </p>
           </div>
@@ -59,70 +54,70 @@ export const OperationsDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* KPI Cards Row (5 Core Operational Metrics) */}
+      {/* KPI Cards Row (Zero purple, crisp clinical badges) */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
         
-        {/* KPI 1: Alerts / Day */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+        {/* KPI 1 */}
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs">
           <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Alerts / Day</div>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl sm:text-3xl font-black text-slate-900">{metrics.alertsPerDayAvg}</span>
-            <span className="text-xs font-bold text-teal-600">Within Cap</span>
+            <span className="text-xs font-bold text-teal-700">Within Cap</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">Guards against fatigue (Cap: 15)</p>
+          <p className="text-[11px] text-slate-500 mt-1">Guards against fatigue (Cap: 15)</p>
         </div>
 
-        {/* KPI 2: Avg Response Time */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+        {/* KPI 2 */}
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs">
           <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Avg Response Time</div>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl sm:text-3xl font-black text-slate-900">{metrics.avgResponseMins}</span>
             <span className="text-xs font-semibold text-slate-500">mins</span>
           </div>
-          <p className="text-[11px] text-teal-600 font-medium mt-1">↓ 14m faster than baseline</p>
+          <p className="text-[11px] text-teal-700 font-medium mt-1">14m faster than baseline</p>
         </div>
 
-        {/* KPI 3: % Marked Useful */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+        {/* KPI 3 */}
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs">
           <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">% Alerts Useful</div>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-2xl sm:text-3xl font-black text-teal-700">{metrics.percentUseful}%</span>
-            <span className="text-xs font-bold text-teal-600">↑ High</span>
+            <span className="text-2xl sm:text-3xl font-black text-teal-800">{metrics.percentUseful}%</span>
+            <span className="text-xs font-bold text-teal-700">High</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">Coordinator thumbs feedback</p>
+          <p className="text-[11px] text-slate-500 mt-1">Coordinator thumbs feedback</p>
         </div>
 
-        {/* KPI 4: Precision @ Top-10 */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+        {/* KPI 4 */}
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs">
           <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Precision @ Top-10</div>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-2xl sm:text-3xl font-black text-blue-700">{metrics.precisionAtTop10}%</span>
-            <span className="text-xs font-bold text-blue-600">P@10</span>
+            <span className="text-2xl sm:text-3xl font-black text-blue-800">{metrics.precisionAtTop10}%</span>
+            <span className="text-xs font-bold text-blue-700">P@10</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">Top flagged truly need care</p>
+          <p className="text-[11px] text-slate-500 mt-1">Top flagged truly need care</p>
         </div>
 
-        {/* KPI 5: Avg Days Early Detection */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs col-span-2 lg:col-span-1">
+        {/* KPI 5 (Clean blue/slate, NO purple) */}
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs col-span-2 lg:col-span-1">
           <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Avg Early Detection</div>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-2xl sm:text-3xl font-black text-purple-700">{metrics.avgDaysEarly}</span>
-            <span className="text-xs font-semibold text-purple-900">days early</span>
+            <span className="text-2xl sm:text-3xl font-black text-slate-900">{metrics.avgDaysEarly}</span>
+            <span className="text-xs font-semibold text-slate-700">days early</span>
           </div>
-          <p className="text-[11px] text-purple-600 font-medium mt-1">Pre-empts hospitalization</p>
+          <p className="text-[11px] text-teal-700 font-medium mt-1">Pre-empts hospitalization</p>
         </div>
 
       </div>
 
-      {/* Main Charts: Volume Over Time & Outcomes Breakdown */}
+      {/* Main Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* Chart 1: Daily Alert Volume & Resolution Trend */}
-        <div className="lg:col-span-8 bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
+        {/* Chart 1: Volume */}
+        <div className="lg:col-span-8 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-2xs space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-teal-600" />
+                <TrendingUp className="w-4 h-4 text-teal-700" />
                 Alert Ingestion & Coordinator Resolution (October 2026)
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -131,10 +126,10 @@ export const OperationsDashboard: React.FC = () => {
             </div>
             <div className="flex items-center gap-3 text-xs">
               <span className="flex items-center gap-1.5 text-slate-600 font-semibold">
-                <span className="w-3 h-3 rounded bg-blue-500 inline-block" /> Alerts Fired
+                <span className="w-3 h-3 rounded-sm bg-blue-700 inline-block" /> Alerts Fired
               </span>
               <span className="flex items-center gap-1.5 text-slate-600 font-semibold">
-                <span className="w-3 h-3 rounded bg-teal-500 inline-block" /> Handled / Resolved
+                <span className="w-3 h-3 rounded-sm bg-teal-600 inline-block" /> Handled
               </span>
             </div>
           </div>
@@ -145,7 +140,7 @@ export const OperationsDashboard: React.FC = () => {
                 <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                 <YAxis domain={[0, 20]} tick={{ fontSize: 11 }} />
                 <Tooltip
-                  content={({ active, payload, label }) => {
+                  content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const d = payload[0].payload;
                       return (
@@ -167,8 +162,8 @@ export const OperationsDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Chart 2: Alert Outcomes Distribution */}
-        <div className="lg:col-span-4 bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col justify-between">
+        {/* Chart 2: Outcomes */}
+        <div className="lg:col-span-4 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-2xs flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-bold text-slate-900 mb-1">
               Alert Outcomes Breakdown
@@ -201,7 +196,7 @@ export const OperationsDashboard: React.FC = () => {
             {metrics.outcomesBreakdown.map((item, idx) => (
               <div key={idx} className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-slate-600">
-                  <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: item.color }} />
+                  <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ backgroundColor: item.color }} />
                   {item.name}
                 </span>
                 <span className="font-bold text-slate-900">{item.value}%</span>
@@ -212,8 +207,8 @@ export const OperationsDashboard: React.FC = () => {
 
       </div>
 
-      {/* City Comparison & Response Times */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
+      {/* City Comparison */}
+      <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-2xs space-y-4">
         <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
           <MapPin className="w-4 h-4 text-slate-600" />
           City-Level Regional Cohort Comparison
@@ -231,23 +226,21 @@ export const OperationsDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Coordinator Caseload Management Table */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Users className="w-4 h-4 text-teal-600" />
-              Care Coordinator Caseload & Alert Queue Performance
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Live coordinator capacity balance. Target cap is 50-55 seniors per coordinator.
-            </p>
-          </div>
+      {/* Coordinator Table */}
+      <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-2xs space-y-4">
+        <div>
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <Users className="w-4 h-4 text-teal-700" />
+            Care Coordinator Caseload & Alert Queue Performance
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Live coordinator capacity balance. Target cap is 50-55 seniors per coordinator.
+          </p>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200">
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left text-xs min-w-[600px]">
+            <thead className="bg-slate-50 text-slate-600 uppercase tracking-wider font-bold text-[10px] border-b border-slate-200">
               <tr>
                 <th className="py-3 px-4">Coordinator</th>
                 <th className="py-3 px-4">Primary Hub</th>
@@ -260,7 +253,7 @@ export const OperationsDashboard: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
               {COORDINATORS.map((coord) => (
-                <tr key={coord.id} className="hover:bg-slate-50/70 transition-colors">
+                <tr key={coord.id} className="hover:bg-slate-50 transition-colors">
                   <td className="py-3.5 px-4 font-bold text-slate-900">
                     <div>{coord.name}</div>
                     <div className="text-[11px] text-slate-400 font-normal">{coord.phone}</div>
@@ -268,7 +261,7 @@ export const OperationsDashboard: React.FC = () => {
                   <td className="py-3.5 px-4">{coord.city}</td>
                   <td className="py-3.5 px-4 font-bold">{coord.totalCaseload} seniors</td>
                   <td className="py-3.5 px-4">
-                    <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded-full font-bold text-[11px]">
+                    <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded-md font-bold text-[11px]">
                       {coord.alertsToday} active
                     </span>
                   </td>
@@ -277,7 +270,7 @@ export const OperationsDashboard: React.FC = () => {
                     <span className="font-bold text-teal-700">{coord.precisionRate}%</span>
                   </td>
                   <td className="py-3.5 px-4">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
                       <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Optimal Flow
                     </span>
                   </td>

@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { useToast } from '../context/ToastContext';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { 
   ResponsiveContainer, 
   ComposedChart, 
@@ -9,62 +11,58 @@ import {
   XAxis, 
   YAxis, 
   Tooltip, 
-  BarChart, 
-  Bar, 
-  Cell 
 } from 'recharts';
 import { 
   ArrowLeft, 
   Activity, 
   Pill, 
   MessageSquare, 
-  Clock, 
   Calendar, 
   PhoneCall, 
-  ShieldCheck, 
   ShieldAlert, 
   CheckCircle2, 
-  TrendingUp, 
   MapPin, 
   Copy, 
   Check, 
   Sparkles, 
   Heart, 
   Languages, 
-  SlidersHorizontal,
   ChevronRight,
-  AlertTriangle
 } from 'lucide-react';
 import { CueTag } from '../types';
 
 export const SeniorDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { seniors, toggleConsent, handleAlertAction, handleFeedback } = useApp();
+  const { seniors, toggleConsent, handleAlertAction } = useApp();
+  const { showToast } = useToast();
 
-  // Find senior or fallback to first
   const senior = seniors.find(s => s.id === id) || seniors[0];
+  useDocumentTitle(`${senior.name} - Baseline & Triage`);
 
-  // Active tab
   const [activeTab, setActiveTab] = useState<'overview' | 'vitals' | 'medication' | 'calls' | 'timeline'>('overview');
-  
-  // Script language toggle: Hindi vs English
   const [scriptLang, setScriptLang] = useState<'hindi' | 'english'>('hindi');
   const [copiedScript, setCopiedScript] = useState(false);
-
-  // Call translation toggle for all notes
   const [showEnglishTranslation, setShowEnglishTranslation] = useState(false);
-
-  // Vitals time range toggle: 14d, 30d, 90d
   const [vitalsRange, setVitalsRange] = useState<14 | 30 | 90>(30);
-
-  // Selected vital metric: bp | sugar | spo2 | weight
   const [selectedVital, setSelectedVital] = useState<'bp' | 'sugar' | 'spo2' | 'weight'>('bp');
 
   const copyScriptToClipboard = () => {
     const text = scriptLang === 'hindi' ? senior.recommendedScript.hindi : senior.recommendedScript.english;
     navigator.clipboard.writeText(text);
     setCopiedScript(true);
+    showToast('Call script copied to clipboard', 'success');
     setTimeout(() => setCopiedScript(false), 2000);
+  };
+
+  const handleConsentToggle = () => {
+    const nextVal = !senior.familyConsentGranted;
+    toggleConsent(senior.id, nextVal);
+    showToast(
+      nextVal 
+        ? `Family portal sharing enabled for ${senior.linkedFamilyName}.` 
+        : `Family portal sharing paused. Senior autonomy preserved.`,
+      'info'
+    );
   };
 
   // Vitals data mapped for Recharts with the senior's OWN baseline band
@@ -73,13 +71,12 @@ export const SeniorDetail: React.FC = () => {
     const b = senior.baseline;
 
     return sliceDays.map(d => {
-      const shortDate = d.date.slice(5); // MM-DD
+      const shortDate = d.date.slice(5);
       return {
         date: shortDate,
         fullDate: d.date,
         systolic: d.vitals.systolicBp,
         diastolic: d.vitals.diastolicBp,
-        // Senior's own personal baseline band (mean ± 1.5 SD)
         sysBaseline: b.systolicBp,
         sysUpper: +(b.systolicBp + 1.5 * b.systolicBpSd).toFixed(1),
         sysLower: +(b.systolicBp - 1.5 * b.systolicBpSd).toFixed(1),
@@ -94,22 +91,19 @@ export const SeniorDetail: React.FC = () => {
         weight: d.vitals.weight,
         weightUpper: +(b.weight + 1.5 * b.weightSd).toFixed(1),
         weightLower: +(b.weight - 1.5 * b.weightSd).toFixed(1),
-        
-        isDrift: d.vitals.systolicBp > b.systolicBp + 1.5 * b.systolicBpSd || 
-                 (d.vitals.fastingSugar && d.vitals.fastingSugar > b.fastingSugar + 1.5 * b.fastingSugarSd)
       };
     });
   }, [senior, vitalsRange]);
 
-  // "Why this score" additive horizontal data
+  // "Why this score" additive horizontal data (Clean clinical colors, zero purple)
   const scoreBreakdownData = useMemo(() => {
     const bd = senior.scoreBreakdown;
     return [
       { name: 'Personal Baseline Vitals Shift', value: bd.vitalsDeviation, fill: '#DC2626' },
       { name: 'Indic NLP Call Sentiment / Cues', value: bd.nlpCallCues, fill: '#EA580C' },
       { name: 'Medication Adherence Gap', value: bd.medicationAdherence, fill: '#D97706' },
-      { name: 'Unusual Silence / Missed Check-ins', value: bd.silencePattern, fill: '#7C3AED' },
-      { name: 'Trend Velocity (Multi-day)', value: bd.trendAcceleration, fill: '#2563EB' },
+      { name: 'Unusual Silence / Missed Check-ins', value: bd.silencePattern, fill: '#475569' },
+      { name: 'Trend Velocity (Multi-day)', value: bd.trendAcceleration, fill: '#0F766E' },
     ];
   }, [senior]);
 
@@ -126,11 +120,11 @@ export const SeniorDetail: React.FC = () => {
       case 'fall':
         return 'bg-rose-100 text-rose-950 font-bold border-rose-400';
       case 'poor sleep':
-        return 'bg-indigo-100 text-indigo-900 border-indigo-300';
+        return 'bg-slate-200 text-slate-900 border-slate-300';
       case 'low appetite':
         return 'bg-orange-100 text-orange-900 border-orange-300';
       case 'confusion':
-        return 'bg-purple-100 text-purple-900 border-purple-300';
+        return 'bg-slate-100 text-slate-800 border-slate-300';
       case 'loneliness':
         return 'bg-blue-100 text-blue-900 border-blue-300';
       case 'missed meds':
@@ -141,10 +135,10 @@ export const SeniorDetail: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-6">
       
-      {/* Back to priorities navigation */}
-      <div className="mb-4">
+      {/* Back button */}
+      <div>
         <Link 
           to="/"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-teal-700 transition-colors bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs"
@@ -154,15 +148,13 @@ export const SeniorDetail: React.FC = () => {
       </div>
 
       {/* Senior Profile Summary Header Card */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-xs mb-6">
+      <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-2xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100">
           
-          {/* Left: Avatar, Name, Meta, Living situation */}
+          {/* Avatar, Name, Meta, Living situation */}
           <div className="flex items-start gap-4">
-            <div className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center text-white shrink-0 shadow-md ${
-              senior.currentUrgency === 'critical'
-                ? 'bg-gradient-to-br from-red-600 to-rose-700'
-                : 'bg-gradient-to-br from-amber-500 to-amber-600'
+            <div className={`w-16 h-16 rounded-xl flex flex-col items-center justify-center text-white shrink-0 ${
+              senior.currentUrgency === 'critical' ? 'bg-red-700' : 'bg-amber-600'
             }`}>
               <span className="text-2xl font-black">{senior.currentRiskScore}</span>
               <span className="text-[9px] font-bold uppercase tracking-wider opacity-90">Score</span>
@@ -174,9 +166,9 @@ export const SeniorDetail: React.FC = () => {
                   {senior.name}
                 </h1>
                 <span className="text-sm font-semibold text-slate-600">
-                  {senior.age} years • {senior.gender}
+                  {senior.age} years : {senior.gender}
                 </span>
-                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border ${
+                <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider border ${
                   senior.currentUrgency === 'critical'
                     ? 'bg-red-50 text-red-700 border-red-200'
                     : 'bg-amber-50 text-amber-700 border-amber-200'
@@ -190,35 +182,36 @@ export const SeniorDetail: React.FC = () => {
                   <MapPin className="w-3.5 h-3.5 text-slate-400" />
                   {senior.city} ({senior.area})
                 </span>
-                <span>•</span>
+                <span>:</span>
                 <span>{senior.livingSituation}</span>
-                <span>•</span>
+                <span>:</span>
                 <span>Coordinator: <strong className="text-slate-800">{senior.assignedCoordinatorName}</strong></span>
               </div>
 
-              <div className="mt-2 text-xs text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200/80 inline-block">
+              <div className="mt-2 text-xs text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 inline-block">
                 <strong>Contextual History:</strong> {senior.primaryContext}
               </div>
             </div>
           </div>
 
-          {/* Right: Family Sharing Consent Toggle & Quick Actions */}
+          {/* Consent Toggle & Quick Actions */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 lg:justify-end">
             
-            {/* Consent Toggle Box */}
+            {/* Consent Box */}
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs">
               <div className="flex items-center justify-between gap-4 mb-1">
                 <span className="font-bold text-slate-800 flex items-center gap-1">
-                  <Heart className="w-3.5 h-3.5 text-rose-500" /> Family Portal Sharing
+                  <Heart className="w-3.5 h-3.5 text-rose-600" /> Family Portal Sharing
                 </span>
                 <button
-                  onClick={() => toggleConsent(senior.id, !senior.familyConsentGranted)}
-                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                    senior.familyConsentGranted ? 'bg-teal-600' : 'bg-slate-300'
+                  onClick={handleConsentToggle}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-md border-2 border-transparent transition-colors focus:outline-hidden ${
+                    senior.familyConsentGranted ? 'bg-teal-700' : 'bg-slate-300'
                   }`}
+                  aria-label="Toggle family sharing consent"
                 >
                   <span
-                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-sm bg-white shadow-sm transition duration-200 ${
                       senior.familyConsentGranted ? 'translate-x-4' : 'translate-x-0'
                     }`}
                   />
@@ -232,20 +225,24 @@ export const SeniorDetail: React.FC = () => {
                   </span>
                 ) : (
                   <span className="text-amber-700 font-semibold flex items-center gap-1">
-                    <ShieldAlert className="w-3 h-3" /> Consent Revoked (Private to Coordinator)
+                    <ShieldAlert className="w-3 h-3" /> Consent Paused (Coordinator View Only)
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Quick action buttons */}
+            {/* Quick Actions */}
             <div className="flex items-center gap-2">
               <button
-                onClick={() => handleAlertAction(senior.id, senior.alertStatus === 'done' ? 'pending' : 'done')}
-                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                onClick={() => {
+                  const isDone = senior.alertStatus === 'done';
+                  handleAlertAction(senior.id, isDone ? 'pending' : 'done');
+                  showToast(isDone ? `Reopened alert for ${senior.name}` : `Resolved alert for ${senior.name}`, 'success');
+                }}
+                className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                   senior.alertStatus === 'done'
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-teal-600 hover:bg-teal-700 text-white shadow-xs'
+                    ? 'bg-emerald-700 text-white'
+                    : 'bg-teal-700 hover:bg-teal-800 text-white shadow-2xs'
                 }`}
               >
                 <CheckCircle2 className="w-4 h-4" />
@@ -253,8 +250,11 @@ export const SeniorDetail: React.FC = () => {
               </button>
 
               <button
-                onClick={() => handleAlertAction(senior.id, 'snoozed')}
-                className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors"
+                onClick={() => {
+                  handleAlertAction(senior.id, 'snoozed');
+                  showToast(`Snoozed alert for ${senior.name} for 24h`, 'info');
+                }}
+                className="px-3 py-2 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors"
               >
                 Snooze 24h
               </button>
@@ -281,11 +281,11 @@ export const SeniorDetail: React.FC = () => {
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`px-3.5 py-2 rounded-lg transition-all flex items-center gap-2 whitespace-nowrap ${
                   isActive
-                    ? 'bg-teal-50 text-teal-800 font-bold border border-teal-200'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    ? 'bg-slate-900 text-white font-bold'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-teal-600' : 'text-slate-400'}`} />
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-teal-400' : 'text-slate-400'}`} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -298,25 +298,23 @@ export const SeniorDetail: React.FC = () => {
       {activeTab === 'overview' && (
         <div className="space-y-6">
           
-          {/* Top Grid: "Why this score" Exact Additive Panel & Recommended Next Step */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            {/* "Why this score" horizontal additive chart (Matches score exactly!) */}
-            <div className="lg:col-span-6 bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
+            {/* "Why this score" additive panel */}
+            <div className="lg:col-span-6 bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-amber-500" />
                   "Why This Score": Additive Risk Attribution
                 </h3>
-                <span className="text-xs font-black bg-slate-100 text-slate-800 px-2 py-0.5 rounded-full border border-slate-200">
+                <span className="text-xs font-black bg-slate-100 text-slate-800 px-2 py-0.5 rounded-md border border-slate-200">
                   Total: {totalCalculatedScore} / 100
                 </span>
               </div>
               <p className="text-xs text-slate-500 mb-4">
-                Exact point contributions that sum directly to the senior’s score. No black box mystery.
+                Exact point contributions that sum directly to the senior’s score. Fully auditable.
               </p>
 
-              {/* Horizontal Breakdown Bars */}
               <div className="space-y-3.5">
                 {scoreBreakdownData.map((item, idx) => (
                   <div key={idx} className="space-y-1">
@@ -324,9 +322,9 @@ export const SeniorDetail: React.FC = () => {
                       <span className="font-semibold text-slate-700">{item.name}</span>
                       <span className="font-bold text-slate-900 font-mono">+{item.value} pts</span>
                     </div>
-                    <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                    <div className="w-full bg-slate-100 rounded-md h-2.5 overflow-hidden">
                       <div
-                        className="h-2.5 rounded-full transition-all duration-500"
+                        className="h-2.5 rounded-md transition-all duration-500"
                         style={{
                           width: `${Math.min(100, (item.value / 40) * 100)}%`,
                           backgroundColor: item.fill,
@@ -337,21 +335,20 @@ export const SeniorDetail: React.FC = () => {
                 ))}
               </div>
 
-              {/* Baseline Context Pill */}
               <div className="mt-5 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600">
-                <span className="font-bold text-slate-800">Calibrated Baseline:</span> Established over 90 days. Deviations reflect departure from {senior.name}'s own normal, not arbitrary population averages.
+                <strong>Calibrated Baseline:</strong> Established over 90 days. Deviations reflect departure from {senior.name}'s own normal, not arbitrary population averages.
               </div>
             </div>
 
-            {/* Recommended Next Step & Call Script in Plain Language */}
-            <div className="lg:col-span-6 bg-gradient-to-br from-teal-900 via-slate-900 to-blue-950 text-white rounded-2xl p-6 shadow-md flex flex-col justify-between">
+            {/* Recommended Next Step & Call Script */}
+            <div className="lg:col-span-6 bg-slate-900 text-white rounded-2xl p-6 shadow-md flex flex-col justify-between">
               
               <div>
                 <div className="flex items-center justify-between gap-2 mb-3">
-                  <span className="text-xs font-bold text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-teal-400 uppercase tracking-wider flex items-center gap-1.5">
                     <PhoneCall className="w-3.5 h-3.5" /> Coordinator Action Guide
                   </span>
-                  <span className="text-xs font-bold bg-teal-500/20 text-teal-200 px-2.5 py-0.5 rounded-full border border-teal-400/30">
+                  <span className="text-xs font-bold bg-teal-500/20 text-teal-300 px-2.5 py-0.5 rounded-md border border-teal-400/30">
                     Recommended: {senior.recommendedAction}
                   </span>
                 </div>
@@ -360,16 +357,16 @@ export const SeniorDetail: React.FC = () => {
                   Suggested Call Script (Culturally Grounded)
                 </h3>
                 <p className="text-xs text-slate-300 mb-4 leading-relaxed">
-                  Care Coordinators use this conversational guide to gently verify the flagged risk without frightening the senior.
+                  Care Coordinators use this conversational guide to gently verify the flagged risk without causing alarm.
                 </p>
 
-                {/* Script Language Selector */}
+                {/* Script Language Switcher */}
                 <div className="flex items-center gap-2 mb-3">
                   <button
                     onClick={() => setScriptLang('hindi')}
                     className={`px-3 py-1 rounded-md text-xs font-bold transition-colors ${
                       scriptLang === 'hindi'
-                        ? 'bg-teal-500 text-white shadow-xs'
+                        ? 'bg-teal-700 text-white'
                         : 'bg-white/10 text-slate-300 hover:bg-white/20'
                     }`}
                   >
@@ -379,7 +376,7 @@ export const SeniorDetail: React.FC = () => {
                     onClick={() => setScriptLang('english')}
                     className={`px-3 py-1 rounded-md text-xs font-bold transition-colors ${
                       scriptLang === 'english'
-                        ? 'bg-teal-500 text-white shadow-xs'
+                        ? 'bg-teal-700 text-white'
                         : 'bg-white/10 text-slate-300 hover:bg-white/20'
                     }`}
                   >
@@ -388,24 +385,24 @@ export const SeniorDetail: React.FC = () => {
                 </div>
 
                 {/* Script Box */}
-                <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/15 text-sm leading-relaxed font-hindi">
+                <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 text-sm leading-relaxed font-hindi">
                   {scriptLang === 'hindi' ? senior.recommendedScript.hindi : senior.recommendedScript.english}
                 </div>
               </div>
 
-              {/* Bottom buttons: Copy script & Launch phone call */}
-              <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-white/10">
+              {/* Action Buttons */}
+              <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-slate-800">
                 <button
                   onClick={copyScriptToClipboard}
-                  className="px-3.5 py-2 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-bold text-white transition-colors flex items-center gap-1.5"
+                  className="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white transition-colors flex items-center gap-1.5 border border-slate-700"
                 >
-                  {copiedScript ? <Check className="w-3.5 h-3.5 text-teal-300" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedScript ? <Check className="w-3.5 h-3.5 text-teal-400" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copiedScript ? 'Copied Script!' : 'Copy Script'}</span>
                 </button>
 
                 <a
                   href={`tel:${senior.phone}`}
-                  className="px-4 py-2 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 font-black text-xs transition-colors flex items-center gap-1.5 shadow-sm"
+                  className="px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-slate-950 font-bold text-xs transition-colors flex items-center gap-1.5 shadow-2xs"
                 >
                   <PhoneCall className="w-3.5 h-3.5 text-slate-950" />
                   <span>Call {senior.phone}</span>
@@ -416,14 +413,14 @@ export const SeniorDetail: React.FC = () => {
 
           </div>
 
-          {/* Quick Snapshot of Vitals & Latest Call */}
+          {/* Vitals Summary & Latest Call Note */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* Vitals Summary Card */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-teal-600" />
+                  <Activity className="w-4 h-4 text-teal-700" />
                   Today's Recorded Vitals vs Personal Baseline
                 </h3>
                 <button 
@@ -435,8 +432,6 @@ export const SeniorDetail: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                
-                {/* BP */}
                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
                   <div className="text-[11px] font-semibold text-slate-500">Blood Pressure</div>
                   <div className="text-base font-extrabold text-slate-900 mt-1">
@@ -448,7 +443,6 @@ export const SeniorDetail: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Sugar */}
                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
                   <div className="text-[11px] font-semibold text-slate-500">Fasting Sugar</div>
                   <div className="text-base font-extrabold text-slate-900 mt-1">
@@ -459,7 +453,6 @@ export const SeniorDetail: React.FC = () => {
                   </div>
                 </div>
 
-                {/* SpO2 */}
                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
                   <div className="text-[11px] font-semibold text-slate-500">SpO2 Oxygen</div>
                   <div className="text-base font-extrabold text-slate-900 mt-1">
@@ -470,7 +463,6 @@ export const SeniorDetail: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Weight */}
                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
                   <div className="text-[11px] font-semibold text-slate-500">Weight</div>
                   <div className="text-base font-extrabold text-slate-900 mt-1">
@@ -480,20 +472,19 @@ export const SeniorDetail: React.FC = () => {
                     Baseline: {senior.baseline.weight} kg
                   </div>
                 </div>
-
               </div>
             </div>
 
             {/* Latest Call Note Card */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-indigo-600" />
+                  <MessageSquare className="w-4 h-4 text-blue-700" />
                   Latest Check-in Call Transcript
                 </h3>
                 <button 
                   onClick={() => setActiveTab('calls')}
-                  className="text-xs font-semibold text-indigo-700 hover:underline flex items-center gap-0.5"
+                  className="text-xs font-semibold text-blue-700 hover:underline flex items-center gap-0.5"
                 >
                   All Call Notes <ChevronRight className="w-3 h-3" />
                 </button>
@@ -510,7 +501,7 @@ export const SeniorDetail: React.FC = () => {
                     {senior.history90Days[senior.history90Days.length - 1].callNote?.cues.map((cue, cIdx) => (
                       <span 
                         key={cIdx}
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getCueBadge(cue.tag)}`}
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${getCueBadge(cue.tag)}`}
                       >
                         {cue.tag.toUpperCase()} ({cue.severity})
                       </span>
@@ -519,7 +510,7 @@ export const SeniorDetail: React.FC = () => {
                 </div>
               ) : (
                 <div className="text-xs text-slate-500 italic p-3 bg-slate-50 rounded-xl">
-                  No direct call recorded today; automated check-in pending or unanswered.
+                  No direct call recorded today; automated check-in pending.
                 </div>
               )}
             </div>
@@ -531,13 +522,12 @@ export const SeniorDetail: React.FC = () => {
 
       {/* TAB 2: VITALS WITH PERSONAL BASELINE BAND SHADED */}
       {activeTab === 'vitals' && (
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-6">
+        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs space-y-6">
           
-          {/* Header & Controls */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
               <h2 className="text-lg font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-                <Activity className="w-5 h-5 text-teal-600" />
+                <Activity className="w-5 h-5 text-teal-700" />
                 Personalized Baseline Vitals Trajectory
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -545,7 +535,6 @@ export const SeniorDetail: React.FC = () => {
               </p>
             </div>
 
-            {/* Time range toggle: 14d, 30d, 90d */}
             <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs font-semibold">
               <button
                 onClick={() => setVitalsRange(14)}
@@ -574,7 +563,6 @@ export const SeniorDetail: React.FC = () => {
             </div>
           </div>
 
-          {/* Metric Selector Buttons */}
           <div className="flex flex-wrap items-center gap-2">
             {[
               { id: 'bp', label: `Blood Pressure (${senior.baseline.systolicBp}/${senior.baseline.diastolicBp} mmHg baseline)` },
@@ -585,9 +573,9 @@ export const SeniorDetail: React.FC = () => {
               <button
                 key={v.id}
                 onClick={() => setSelectedVital(v.id as any)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border ${
                   selectedVital === v.id
-                    ? 'bg-teal-700 text-white border-teal-700 shadow-xs'
+                    ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
                     : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                 }`}
               >
@@ -596,7 +584,6 @@ export const SeniorDetail: React.FC = () => {
             ))}
           </div>
 
-          {/* Interactive Recharts Graph */}
           <div className="h-72 w-full pt-4">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={vitalsChartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
@@ -614,7 +601,7 @@ export const SeniorDetail: React.FC = () => {
                   tick={{ fontSize: 11 }} 
                 />
                 <Tooltip
-                  content={({ active, payload, label }) => {
+                  content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
                       return (
@@ -625,7 +612,7 @@ export const SeniorDetail: React.FC = () => {
                               <div className="text-red-300 font-bold">Systolic: {data.systolic} mmHg</div>
                               <div className="text-slate-300">Diastolic: {data.diastolic} mmHg</div>
                               <div className="text-teal-300">Baseline Mean: {data.sysBaseline} mmHg</div>
-                              <div className="text-slate-400">Expected Normal Band: {data.sysLower} - {data.sysUpper} mmHg</div>
+                              <div className="text-slate-400">Normal Band: {data.sysLower} - {data.sysUpper} mmHg</div>
                             </>
                           )}
                           {selectedVital === 'sugar' && (
@@ -643,7 +630,7 @@ export const SeniorDetail: React.FC = () => {
                           )}
                           {selectedVital === 'weight' && (
                             <>
-                              <div className="text-purple-300 font-bold">Weight: {data.weight} kg</div>
+                              <div className="text-slate-200 font-bold">Weight: {data.weight} kg</div>
                               <div className="text-teal-300">Baseline: {senior.baseline.weight} kg</div>
                             </>
                           )}
@@ -654,7 +641,6 @@ export const SeniorDetail: React.FC = () => {
                   }}
                 />
 
-                {/* Shaded Personal Baseline Band */}
                 {selectedVital === 'bp' && (
                   <>
                     <Area
@@ -663,7 +649,6 @@ export const SeniorDetail: React.FC = () => {
                       stroke="none"
                       fill="#0D9488"
                       fillOpacity={0.15}
-                      name="Personal Baseline Upper (Mean + 1.5 SD)"
                     />
                     <Line
                       type="monotone"
@@ -672,7 +657,6 @@ export const SeniorDetail: React.FC = () => {
                       strokeDasharray="4 4"
                       strokeWidth={1.8}
                       dot={false}
-                      name="Personal Mean Baseline"
                     />
                     <Line
                       type="monotone"
@@ -680,7 +664,6 @@ export const SeniorDetail: React.FC = () => {
                       stroke="#DC2626"
                       strokeWidth={2.5}
                       dot={{ r: 3.5, fill: '#DC2626' }}
-                      name="Actual Systolic BP"
                     />
                   </>
                 )}
@@ -720,15 +703,15 @@ export const SeniorDetail: React.FC = () => {
                       type="monotone"
                       dataKey="weightUpper"
                       stroke="none"
-                      fill="#7C3AED"
+                      fill="#475569"
                       fillOpacity={0.15}
                     />
                     <Line
                       type="monotone"
                       dataKey="weight"
-                      stroke="#7C3AED"
+                      stroke="#0D9488"
                       strokeWidth={2.5}
-                      dot={{ r: 3.5, fill: '#7C3AED' }}
+                      dot={{ r: 3.5, fill: '#0D9488' }}
                     />
                   </>
                 )}
@@ -739,13 +722,13 @@ export const SeniorDetail: React.FC = () => {
           <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-red-600 inline-block" /> Actual Measurement
+                <span className="w-3 h-3 rounded-sm bg-red-600 inline-block" /> Actual Measurement
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-sm bg-teal-500/30 border border-teal-600 inline-block" /> Shaded: Senior's Personal Baseline Band
               </span>
             </div>
-            <span>Deviations calculated via rolling Z-score (N=30)</span>
+            <span>Rolling Z-score deviations (N=30)</span>
           </div>
 
         </div>
@@ -753,7 +736,7 @@ export const SeniorDetail: React.FC = () => {
 
       {/* TAB 3: MEDICATION ADHERENCE HEATMAP */}
       {activeTab === 'medication' && (
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-6">
+        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
@@ -770,24 +753,23 @@ export const SeniorDetail: React.FC = () => {
                 <span className="w-3 h-3 rounded bg-emerald-500 inline-block" /> 100% Taken
               </span>
               <span className="flex items-center gap-1 text-amber-700 font-semibold">
-                <span className="w-3 h-3 rounded bg-amber-400 inline-block" /> Partial / Missed 1
+                <span className="w-3 h-3 rounded bg-amber-400 inline-block" /> Partial
               </span>
               <span className="flex items-center gap-1 text-red-700 font-semibold">
-                <span className="w-3 h-3 rounded bg-red-500 inline-block" /> Missed 2+
+                <span className="w-3 h-3 rounded bg-red-500 inline-block" /> Missed
               </span>
             </div>
           </div>
 
-          {/* 90 Days Heatmap Grid */}
-          <div className="grid grid-cols-10 sm:grid-cols-15 md:grid-cols-18 gap-2 p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
+          <div className="grid grid-cols-10 sm:grid-cols-15 md:grid-cols-18 gap-2 p-4 bg-slate-50 rounded-2xl border border-slate-200">
             {senior.history90Days.map((d, idx) => {
               const rate = d.medication.adherenceRate;
-              const bg = rate === 1.0 ? 'bg-emerald-500 hover:bg-emerald-600' : rate >= 0.5 ? 'bg-amber-400 hover:bg-amber-500' : 'bg-red-500 hover:bg-red-600';
+              const bg = rate === 1.0 ? 'bg-emerald-600 hover:bg-emerald-700' : rate >= 0.5 ? 'bg-amber-500 hover:bg-amber-600' : 'bg-red-600 hover:bg-red-700';
               return (
                 <div
                   key={idx}
                   title={`${d.date}: ${d.medication.taken}/${d.medication.scheduled} doses taken (${Math.round(rate * 100)}%)`}
-                  className={`h-8 rounded-lg ${bg} transition-all cursor-pointer flex items-center justify-center text-[10px] text-white font-bold shadow-2xs hover:scale-105`}
+                  className={`h-8 rounded-md ${bg} transition-all cursor-pointer flex items-center justify-center text-[10px] text-white font-bold shadow-2xs`}
                 >
                   {d.date.slice(8)}
                 </div>
@@ -795,7 +777,6 @@ export const SeniorDetail: React.FC = () => {
             })}
           </div>
 
-          {/* Missed Doses Log */}
           <div className="space-y-3 pt-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
               Recent Missed Dose Observations
@@ -808,7 +789,7 @@ export const SeniorDetail: React.FC = () => {
                 </div>
               ) : (
                 senior.history90Days.slice(-14).filter(d => d.medication.missedDoses.length > 0).map((d, mIdx) => (
-                  <div key={mIdx} className="p-3 bg-red-50/70 rounded-xl border border-red-200 text-xs">
+                  <div key={mIdx} className="p-3 bg-red-50 rounded-xl border border-red-200 text-xs">
                     <div className="flex items-center justify-between font-bold text-red-950 mb-1">
                       <span>{d.date}</span>
                       <span className="text-[10px] bg-red-200 text-red-900 px-1.5 py-0.2 rounded font-semibold">
@@ -829,13 +810,13 @@ export const SeniorDetail: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 4: CALL NOTES & INDIC NLP CUES */}
+      {/* TAB 4: CALL NOTES */}
       {activeTab === 'calls' && (
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-6">
+        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
               <h2 className="text-lg font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-indigo-600" />
+                <MessageSquare className="w-5 h-5 text-blue-700" />
                 Multilingual Check-in Notes & Extracted Cues
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -843,12 +824,14 @@ export const SeniorDetail: React.FC = () => {
               </p>
             </div>
 
-            {/* Translation Toggle */}
             <button
-              onClick={() => setShowEnglishTranslation(!showEnglishTranslation)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
+              onClick={() => {
+                setShowEnglishTranslation(!showEnglishTranslation);
+                showToast(showEnglishTranslation ? 'Displaying original code-mixed transcripts' : 'Displaying English translations for coordinator', 'info');
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border flex items-center gap-1.5 ${
                 showEnglishTranslation
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
                   : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
               }`}
             >
@@ -857,31 +840,30 @@ export const SeniorDetail: React.FC = () => {
             </button>
           </div>
 
-          {/* Call Feed */}
           <div className="space-y-4">
             {senior.history90Days.slice(-10).reverse().filter(d => d.callNote).map((d, cIdx) => {
               const note = d.callNote!;
               return (
                 <div 
                   key={cIdx} 
-                  className={`p-5 rounded-2xl border transition-all ${
+                  className={`p-5 rounded-xl border transition-all ${
                     note.sentiment === 'concerning' || note.sentiment === 'critical'
                       ? 'bg-amber-50/40 border-amber-200'
-                      : 'bg-slate-50/70 border-slate-200'
+                      : 'bg-slate-50 border-slate-200'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="flex items-center gap-2 text-xs">
                       <span className="font-bold text-slate-900">{note.date} at {note.time}</span>
-                      <span className="text-slate-400">•</span>
+                      <span className="text-slate-400">:</span>
                       <span className="text-slate-500">{note.durationMinutes} mins call</span>
-                      <span className="text-slate-400">•</span>
+                      <span className="text-slate-400">:</span>
                       <span className="uppercase text-[10px] font-bold text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
                         {note.language}
                       </span>
                     </div>
 
-                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${
+                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md border ${
                       note.sentiment === 'critical'
                         ? 'bg-red-100 text-red-800 border-red-300'
                         : note.sentiment === 'concerning'
@@ -892,12 +874,10 @@ export const SeniorDetail: React.FC = () => {
                     </span>
                   </div>
 
-                  {/* Note Body */}
-                  <div className="text-xs text-slate-800 leading-relaxed font-hindi bg-white p-3.5 rounded-xl border border-slate-200/80 mb-3">
+                  <div className="text-xs text-slate-800 leading-relaxed font-hindi bg-white p-3.5 rounded-xl border border-slate-200 mb-3">
                     {showEnglishTranslation ? note.englishTranslation : note.originalText}
                   </div>
 
-                  {/* Highlighted Cue Badges with quotes */}
                   {note.cues.length > 0 && (
                     <div className="space-y-1.5 pt-1">
                       <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -907,7 +887,7 @@ export const SeniorDetail: React.FC = () => {
                         {note.cues.map((cue, qIdx) => (
                           <div 
                             key={qIdx}
-                            className={`text-xs px-2.5 py-1 rounded-lg border flex items-center gap-1.5 ${getCueBadge(cue.tag)}`}
+                            className={`text-xs px-2.5 py-1 rounded-md border flex items-center gap-1.5 ${getCueBadge(cue.tag)}`}
                           >
                             <span className="font-bold uppercase text-[10px]">{cue.tag}</span>
                             <span className="text-[11px] opacity-80">"{cue.quote}"</span>
@@ -917,9 +897,8 @@ export const SeniorDetail: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Coordinator Audit Log */}
                   {note.coordinatorNotes && (
-                    <div className="mt-3 pt-2 border-t border-slate-200/60 text-[11px] text-slate-500">
+                    <div className="mt-3 pt-2 border-t border-slate-200 text-[11px] text-slate-500">
                       <strong>Coordinator Follow-up Note:</strong> {note.coordinatorNotes}
                     </div>
                   )}
@@ -934,18 +913,17 @@ export const SeniorDetail: React.FC = () => {
 
       {/* TAB 5: TIMELINE */}
       {activeTab === 'timeline' && (
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-6">
+        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs space-y-6">
           <h2 className="text-lg font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-teal-600" />
+            <Calendar className="w-5 h-5 text-teal-700" />
             Chronological Care & Signal Timeline
           </h2>
 
           <div className="relative pl-6 border-l-2 border-slate-200 space-y-6">
             {senior.history90Days.slice(-14).reverse().map((d, tIdx) => (
               <div key={tIdx} className="relative">
-                {/* Node dot */}
-                <div className={`absolute -left-[31px] top-1 w-4 h-4 rounded-full border-2 border-white shadow-xs ${
-                  d.urgency === 'critical' ? 'bg-red-600' : d.urgency === 'moderate' ? 'bg-amber-500' : 'bg-teal-500'
+                <div className={`absolute -left-[31px] top-1 w-4 h-4 rounded-md border-2 border-white shadow-2xs ${
+                  d.urgency === 'critical' ? 'bg-red-600' : d.urgency === 'moderate' ? 'bg-amber-500' : 'bg-teal-600'
                 }`} />
 
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
@@ -954,9 +932,9 @@ export const SeniorDetail: React.FC = () => {
                     <span className="text-[11px] font-mono text-slate-600">Risk Score: {d.riskScore}/100</span>
                   </div>
                   <div className="text-slate-600 space-y-1">
-                    <div>Systolic BP: <strong>{d.vitals.systolicBp} mmHg</strong> • Sugar: <strong>{d.vitals.fastingSugar} mg/dL</strong></div>
+                    <div>Systolic BP: <strong>{d.vitals.systolicBp} mmHg</strong> : Sugar: <strong>{d.vitals.fastingSugar} mg/dL</strong></div>
                     {d.callNote && (
-                      <div className="text-indigo-900 font-hindi italic">
+                      <div className="text-slate-800 font-hindi italic">
                         "{d.callNote.englishTranslation}"
                       </div>
                     )}
@@ -969,7 +947,7 @@ export const SeniorDetail: React.FC = () => {
       )}
 
       {/* Strict Audit Footer */}
-      <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between text-xs text-amber-900">
+      <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between text-xs text-amber-900">
         <span className="flex items-center gap-2 font-medium">
           <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
           <strong>Audit Safeguard:</strong> This alert is a probabilistic risk signal, not a diagnosis. Human coordinator assessment is required prior to contacting families or clinicians.

@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useToast } from '../context/ToastContext';
 import { 
   Lock, 
   ShieldCheck, 
   Eye, 
   EyeOff, 
   UserCheck, 
-  FileText, 
   CheckCircle2, 
   XCircle, 
-  AlertTriangle,
-  RotateCcw
 } from 'lucide-react';
 
 export const PrivacySafety: React.FC = () => {
+  useDocumentTitle('Privacy, Consent & Safety');
+  const { showToast } = useToast();
   const [isMasked, setIsMasked] = useState(true);
 
-  // Raw vs Masked demo text for the interactive data masking demo
   const rawDataPayload = {
     patientName: 'Smt. Kamala Devi (W/o Late Shri B. N. Sharma)',
     aadhaarNumber: 'XXXX-XXXX-8921',
@@ -72,11 +72,21 @@ export const PrivacySafety: React.FC = () => {
     }
   ];
 
+  const toggleMasking = () => {
+    const nextVal = !isMasked;
+    setIsMasked(nextVal);
+    if (nextVal) {
+      showToast('Privacy Masking activated: Identifiable fields redacted locally.', 'success');
+    } else {
+      showToast('Caution: Displaying unmasked health data and PII.', 'error');
+    }
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-8">
       
       {/* Header */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-xs">
+      <div className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-2xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
@@ -86,7 +96,7 @@ export const PrivacySafety: React.FC = () => {
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               Privacy, Consent & Safety Architecture
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
               Indian elderly care demands strict ethical guardrails. Seniors are individuals with autonomy, not passive subjects.
             </p>
           </div>
@@ -99,25 +109,24 @@ export const PrivacySafety: React.FC = () => {
       </div>
 
       {/* SECTION 1: Interactive Data Masking Demonstration */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
+      <div className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-2xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div>
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <EyeOff className="w-4 h-4 text-indigo-600" />
+              <EyeOff className="w-4 h-4 text-slate-700" />
               Interactive PII Masking Demonstration
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              See what external models and cloud processors see versus what is guarded locally.
+              Inspect what external models and cloud processors see versus what is guarded locally.
             </p>
           </div>
 
-          {/* Toggle Button */}
           <button
-            onClick={() => setIsMasked(!isMasked)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-xs ${
+            onClick={toggleMasking}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 shadow-2xs ${
               isMasked
-                ? 'bg-emerald-600 text-white'
-                : 'bg-red-600 text-white animate-pulse'
+                ? 'bg-emerald-700 text-white'
+                : 'bg-red-700 text-white'
             }`}
           >
             {isMasked ? <ShieldCheck className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -125,7 +134,6 @@ export const PrivacySafety: React.FC = () => {
           </button>
         </div>
 
-        {/* Masked Data Display Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
           
           <div className="space-y-3">
@@ -155,14 +163,14 @@ export const PrivacySafety: React.FC = () => {
             <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs h-full flex flex-col justify-between">
               <div>
                 <div className="text-[11px] font-bold text-slate-400 uppercase">Check-in Voice Note Payload</div>
-                <div className="text-slate-900 font-hindi text-sm leading-relaxed mt-2 p-3 bg-white rounded-lg border border-slate-200/80">
+                <div className="text-slate-900 font-hindi text-sm leading-relaxed mt-2 p-3 bg-white rounded-lg border border-slate-200">
                   "{isMasked ? maskedDataPayload.callTranscriptRaw : rawDataPayload.callTranscriptRaw}"
                 </div>
               </div>
               <div className="text-[10px] text-slate-500 mt-2">
                 {isMasked 
-                  ? '✓ PII redacted locally via on-device regex prior to external vectorization or LLM prompt.' 
-                  : '⚠️ Raw identifiable health information exposed! Masking required.'}
+                  ? 'PII redacted locally via on-device regex prior to external vectorization or LLM prompt.' 
+                  : 'Raw identifiable health information exposed. Local masking required.'}
               </div>
             </div>
           </div>
@@ -171,10 +179,10 @@ export const PrivacySafety: React.FC = () => {
       </div>
 
       {/* SECTION 2: Role-Based Access Control (RBAC) Matrix */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
+      <div className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-2xs space-y-4">
         <div>
           <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-            <UserCheck className="w-4 h-4 text-teal-600" />
+            <UserCheck className="w-4 h-4 text-teal-700" />
             Role-Based Access Control (RBAC) Governance Matrix
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -182,8 +190,8 @@ export const PrivacySafety: React.FC = () => {
           </p>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left text-xs min-w-[650px]">
             <thead className="bg-slate-50 text-slate-600 uppercase font-bold text-[10px] border-b border-slate-200">
               <tr>
                 <th className="py-3 px-4">Protected Data Resource</th>
@@ -195,10 +203,9 @@ export const PrivacySafety: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
               {rbacMatrix.map((row, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/70">
+                <tr key={idx} className="hover:bg-slate-50">
                   <td className="py-3.5 px-4 font-bold text-slate-900">{row.resource}</td>
                   
-                  {/* Coordinator */}
                   <td className="py-3.5 px-4">
                     <span className="inline-flex items-center gap-1 text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded font-bold text-[11px]">
                       <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Granted
@@ -206,7 +213,6 @@ export const PrivacySafety: React.FC = () => {
                     <div className="text-[10px] text-slate-400 mt-0.5">{row.coordinator.note}</div>
                   </td>
 
-                  {/* Manager */}
                   <td className="py-3.5 px-4">
                     {row.manager.allowed ? (
                       <span className="inline-flex items-center gap-1 text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded font-bold text-[11px]">
@@ -220,7 +226,6 @@ export const PrivacySafety: React.FC = () => {
                     <div className="text-[10px] text-slate-400 mt-0.5">{row.manager.note}</div>
                   </td>
 
-                  {/* Family */}
                   <td className="py-3.5 px-4">
                     {row.family.allowed ? (
                       <span className="inline-flex items-center gap-1 text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded font-bold text-[11px]">
@@ -234,7 +239,6 @@ export const PrivacySafety: React.FC = () => {
                     <div className="text-[10px] text-slate-400 mt-0.5">{row.family.note}</div>
                   </td>
 
-                  {/* External Cloud */}
                   <td className="py-3.5 px-4">
                     {row.externalCloud.allowed ? (
                       <span className="inline-flex items-center gap-1 text-blue-800 bg-blue-50 px-2 py-0.5 rounded font-bold text-[11px]">
@@ -255,31 +259,31 @@ export const PrivacySafety: React.FC = () => {
       </div>
 
       {/* SECTION 3: Senior-First Consent Lifecycle Flow */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
+      <div className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-2xs space-y-4">
         <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-emerald-600" />
           Senior Consent Lifecycle Protocol
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
             <div className="font-bold text-slate-900 text-sm">1. Explicit Voice Consent</div>
             <p className="text-slate-600 leading-relaxed">
-              During enrollment, seniors are asked in Hindi/English if they wish routine weekly summaries shared with designated family contacts.
+              During enrollment, seniors are asked in Hindi or English if they wish routine weekly summaries shared with designated family contacts.
             </p>
           </div>
 
-          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
             <div className="font-bold text-slate-900 text-sm">2. Instant Granular Revoke</div>
             <p className="text-slate-600 leading-relaxed">
               At any point during a check-in call, saying <em>"Bache ko mat bataiye"</em> instantly pauses the family companion feed without coordinator override.
             </p>
           </div>
 
-          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
             <div className="font-bold text-slate-900 text-sm">3. Zero Medical Labeling</div>
             <p className="text-slate-600 leading-relaxed">
-              No family member ever receives medical jargon (e.g. "hypertensive crisis" or "dementia"). Messages focus strictly on human comfort and social presence.
+              No family member ever receives medical jargon (such as "hypertensive crisis" or "dementia"). Messages focus strictly on human comfort and social presence.
             </p>
           </div>
         </div>
