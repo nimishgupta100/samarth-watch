@@ -63,8 +63,8 @@ const LABELS = {
 
     // Dedicated Login Pages
     loginDedicatedHeading: '{role} Login',
-    loginFamilySub: 'Enter your registered mobile number to receive a secure 6-digit code.',
-    loginSeniorSub: 'Enter your 10-digit mobile number. We will send you a 6-digit code to sign in.',
+    loginFamilySub: 'Enter your registered mobile number to receive a secure 4-digit code.',
+    loginSeniorSub: 'Enter your 10-digit mobile number. We will send you a 4-digit code to sign in.',
     loginCoordSub: 'Enter your coordinator staff username and password to access your caseload.',
     loginOpsSub: 'Enter your operations manager username and password to access system analytics.',
 
@@ -77,9 +77,9 @@ const LABELS = {
     passwordLabel: 'Password',
     passwordPlaceholder: 'Enter your password',
     otpStepLabel: 'OTP Verification',
-    otpStepSub: 'Enter the 6-digit code sent to your mobile number',
-    otpFieldLabel: '6-digit OTP Code',
-    otpFieldPlaceholder: '• • • • • •',
+    otpStepSub: 'Enter the 4-digit code sent to your mobile number',
+    otpFieldLabel: '4-digit OTP Code',
+    otpFieldPlaceholder: '• • • •',
 
     btnContinue: 'Send OTP',
     btnLogin: 'Log in',
@@ -88,8 +88,8 @@ const LABELS = {
     backToHome: 'Back to home',
     genericError: 'Details did not match. Please check and try again.',
     lockoutNotice: 'Too many failed attempts. Further attempts locked for {seconds} seconds.',
-    dataStaysNotice: 'Demo data is cached locally; selected updates sync through Supabase.',
-    secureSessionNotice: 'Secure sign-in powered by Supabase',
+    dataStaysNotice: 'Your information stays securely on this device in this prototype',
+    secureSessionNotice: 'Secure local session on this device',
     showPass: 'Show password',
     hidePass: 'Hide password',
     clearData: 'Having trouble? Clear browser data and reload',
@@ -131,7 +131,7 @@ const LABELS = {
 
     // Dedicated Login Pages
     loginDedicatedHeading: '{role} लॉग इन',
-    loginFamilySub: 'सुरक्षित 6-अंकीय कोड प्राप्त करने के लिए अपना पंजीकृत मोबाइल नंबर दर्ज करें।',
+    loginFamilySub: 'सुरक्षित 4-अंकीय कोड प्राप्त करने के लिए अपना पंजीकृत मोबाइल नंबर दर्ज करें।',
     loginSeniorSub: 'साइन इन करने के लिए अपना 10 अंकों का मोबाइल नंबर दर्ज करें।',
     loginCoordSub: 'केसलोड देखने के लिए अपना केयर समन्वयक यूज़रनेम और पासवर्ड दर्ज करें।',
     loginOpsSub: 'सिस्टम एनालिटिक्स देखने के लिए संचालन प्रबंधक यूज़रनेम और पासवर्ड दर्ज करें।',
@@ -145,9 +145,9 @@ const LABELS = {
     passwordLabel: 'पासवर्ड',
     passwordPlaceholder: 'अपना पासवर्ड दर्ज करें',
     otpStepLabel: 'ओटीपी सत्यापन',
-    otpStepSub: 'अपने मोबाइल नंबर पर भेजा गया 6 अंकों का कोड दर्ज करें',
-    otpFieldLabel: '6 अंकों का कोड',
-    otpFieldPlaceholder: '• • • • • •',
+    otpStepSub: 'अपने मोबाइल नंबर पर भेजा गया 4 अंकों का कोड दर्ज करें',
+    otpFieldLabel: '4 अंकों का कोड',
+    otpFieldPlaceholder: '• • • •',
 
     btnContinue: 'ओटीपी प्राप्त करें',
     btnLogin: 'लॉग इन करें',
@@ -156,8 +156,8 @@ const LABELS = {
     backToHome: 'मुख्य पृष्ठ पर वापस',
     genericError: 'विवरण मेल नहीं खाते। कृपया जांचें और पुनः प्रयास करें।',
     lockoutNotice: 'बहुत अधिक असफल प्रयास। आगे के प्रयास {seconds} सेकंड के लिए रोक दिए गए हैं।',
-    dataStaysNotice: 'डेमो डेटा डिवाइस पर कैश होता है; चुने हुए अपडेट Supabase से सिंक होते हैं।',
-    secureSessionNotice: 'Supabase द्वारा सुरक्षित साइन-इन',
+    dataStaysNotice: 'इस प्रोटोटाइप में आपकी जानकारी इसी डिवाइस पर सुरक्षित रहती है',
+    secureSessionNotice: 'इस डिवाइस पर सुरक्षित स्थानीय सत्र',
     showPass: 'पासवर्ड दिखाएं',
     hidePass: 'पासवर्ड छुपाएं',
     clearData: 'समस्या आ रही है? ब्राउज़र डेटा साफ़ करें और पुनः लोड करें',
@@ -282,22 +282,20 @@ export const LoginPage: React.FC = () => {
     }
 
     setLoading(true);
-    try {
-      const expectedRole = activeRole === 'family' ? 'family' : 'senior';
-      const res = await requestOtp(normalized, expectedRole);
-      if (res.success) {
-        setOtpStep(true);
-        setError('');
-      } else {
-        setError(res.error || L.genericError);
-      }
-    } finally {
-      setLoading(false);
+    const expectedRole = activeRole === 'family' ? 'family' : 'senior';
+    const res = requestOtp(normalized, expectedRole);
+    setLoading(false);
+
+    if (res.success) {
+      setOtpStep(true);
+      setError('');
+    } else {
+      setError(res.error || L.genericError);
     }
   };
 
   // OTP verification handler
-  const handleOtpSubmit = async (e: React.FormEvent) => {
+  const handleOtpSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -312,18 +310,19 @@ export const LoginPage: React.FC = () => {
     }
 
     setLoading(true);
-    try {
-      const res = await verifyOtp(identifier, otp);
-      if (res.success && res.role) {
-        setRole(res.role);
-        navigate(roleHomePath(res.role), { replace: true });
-      } else if (res.success) {
-        navigate('/login', { replace: true });
+    const res = verifyOtp(identifier, otp);
+    setLoading(false);
+
+    if (res.success) {
+      const role = (res as { success: boolean; role?: string }).role;
+      if (role) {
+        setRole(role as any);
+        navigate(roleHomePath(role as import('../data/schema').UserRole), { replace: true });
       } else {
-        setError(res.error || L.genericError);
+        navigate('/login', { replace: true });
       }
-    } finally {
-      setLoading(false);
+    } else {
+      setError(res.error || L.genericError);
     }
   };
 

@@ -4,6 +4,9 @@
  */
 
 export const DATA_VERSION = 2;
+export const DEMO_OTP = '4321';
+export const PASSWORD_SALT = 'samarth_salt_2026';
+export const COORDINATOR_PASSWORD_HASH = '89aa3efa250e2f3dfbadabff6b81590f5b9a925841796053bd4786452163204c';
 
 export type UserRole = 'coordinator' | 'senior' | 'family' | 'manager';
 
@@ -13,6 +16,8 @@ export interface User {
   name: string;
   username?: string;
   phone?: string;
+  passwordHash?: string;
+  passwordSalt?: string;
   relationship?: string;
   linkedSeniorId?: string;
   createdAt: number;
@@ -90,7 +95,7 @@ export interface CheckInRecord {
 export interface ChatMessageRecord {
   id: string;
   seniorId: string;
-  senderRole: 'family' | 'coordinator' | 'senior';
+  senderRole: 'family' | 'coordinator';
   senderName: string;
   text: string;
   timestamp: number;
@@ -224,6 +229,8 @@ export const INITIAL_SEED_DATA: AppStateData = {
       name: 'Nimish Gupta',
       username: 'nimishgupta100',
       phone: '9368059741',
+      passwordHash: COORDINATOR_PASSWORD_HASH,
+      passwordSalt: PASSWORD_SALT,
       createdAt: 1730000000000,
     },
     {
