@@ -1,4 +1,4 @@
-export type SupportedLanguage = 'en' | 'hi';
+export type SupportedLanguage = 'en' | 'hi' | 'bn' | 'mr' | 'ta' | 'te';
 
 export interface LanguageOption {
   code: SupportedLanguage;
@@ -22,6 +22,34 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
     englishName: 'Hindi',
     speechCode: 'hi-IN',
     fontFamilyClass: 'font-hindi',
+  },
+  {
+    code: 'bn',
+    nameInScript: 'বাংলা',
+    englishName: 'Bengali',
+    speechCode: 'bn-IN',
+    fontFamilyClass: 'font-sans',
+  },
+  {
+    code: 'mr',
+    nameInScript: 'मराठी',
+    englishName: 'Marathi',
+    speechCode: 'mr-IN',
+    fontFamilyClass: 'font-hindi',
+  },
+  {
+    code: 'ta',
+    nameInScript: 'தமிழ்',
+    englishName: 'Tamil',
+    speechCode: 'ta-IN',
+    fontFamilyClass: 'font-sans',
+  },
+  {
+    code: 'te',
+    nameInScript: 'తెలుగు',
+    englishName: 'Telugu',
+    speechCode: 'te-IN',
+    fontFamilyClass: 'font-sans',
   },
 ];
 

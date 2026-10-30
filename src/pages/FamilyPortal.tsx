@@ -12,6 +12,7 @@ import { FamilyTopBar } from '../components/family/FamilyTopBar';
 import { FamilySidebar } from '../components/family/FamilySidebar';
 import { FamilyBottomNav, FamilyTab } from '../components/family/FamilyBottomNav';
 import { FamilyQuickActionTile } from '../components/family/FamilyQuickActionTile';
+import { DoctorCareSection } from '../components/telehealth/DoctorCareSection';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -1460,7 +1461,10 @@ export const FamilyPortal: React.FC = () => {
           {/* TAB 4: APPOINTMENTS */}
           {activeTab === 'appointments' && (
             <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              {/* Doctor Consultation & Care Circle Section matching reference design */}
+              <DoctorCareSection seniorName={senior.name} />
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-border">
                 <div>
                   <h2 className="text-lg sm:text-xl font-bold text-forest">Consultations & Calendar</h2>
                   <p className="text-xs text-ink-muted mt-0.5">Sessions with care coordinator and home health visits</p>

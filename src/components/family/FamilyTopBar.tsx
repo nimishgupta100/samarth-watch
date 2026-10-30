@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { InitialsAvatar } from '../coordinator/InitialsAvatar';
+import { LanguageSelector } from '../common/LanguageSelector';
 import { 
   Bell, 
   Languages, 
@@ -81,15 +82,8 @@ export const FamilyTopBar: React.FC<FamilyTopBarProps> = ({
             )}
           </button>
 
-          {/* Language Switch Button */}
-          <button
-            type="button"
-            onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
-            className="min-h-[40px] px-2.5 py-1.5 rounded-lg border border-border bg-mint-deep hover:bg-mint text-forest text-xs font-bold flex items-center gap-1.5 transition-colors focus:outline-none focus:ring-2 focus:ring-forest"
-          >
-            <Languages className="w-4 h-4" strokeWidth={1.5} />
-            <span>{language === 'en' ? 'हिन्दी' : 'EN'}</span>
-          </button>
+          {/* Language Selector */}
+          <LanguageSelector />
 
           {/* Profile Menu Toggle */}
           <div ref={profileRef} className="relative">

@@ -7,6 +7,7 @@ import { StatusChip } from '../../components/coordinator/StatusChip';
 import { SegmentedTabs } from '../../components/coordinator/SegmentedTabs';
 import { DateStrip } from '../../components/coordinator/DateStrip';
 import { SlotPicker } from '../../components/coordinator/SlotPicker';
+import { DoctorCareSection } from '../../components/telehealth/DoctorCareSection';
 import { 
   Calendar, 
   Video, 
@@ -400,6 +401,9 @@ export const CoordinatorAppointmentsPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Telehealth Specialists & Doctor Consultation Section (matching modern design) */}
+      <DoctorCareSection className="pt-6 border-t border-border" />
 
       {/* SCHEDULE MODAL */}
       {showScheduleModal && (

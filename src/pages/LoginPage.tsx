@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth, roleHomePath, normalizeIndianPhoneNumber } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { LanguageSelector } from '../components/common/LanguageSelector';
 import {
   Activity,
   Lock,
@@ -383,30 +384,8 @@ export const LoginPage: React.FC = () => {
               <span>{L.backToHome}</span>
             </Link>
 
-            {/* Language Toggle */}
-            <div className="flex items-center gap-1 bg-mint p-1 rounded-lg border border-mint-border text-xs font-bold">
-              <Languages className="w-3.5 h-3.5 text-forest ml-1" aria-hidden="true" />
-              <button
-                type="button"
-                onClick={() => setLanguage('en')}
-                className={`px-2 py-0.5 rounded transition-colors ${
-                  !isHi ? 'bg-forest text-cream shadow-xs' : 'text-ink-muted hover:text-forest'
-                }`}
-                aria-pressed={!isHi}
-              >
-                EN
-              </button>
-              <button
-                type="button"
-                onClick={() => setLanguage('hi')}
-                className={`px-2 py-0.5 rounded font-hindi transition-colors ${
-                  isHi ? 'bg-forest text-cream shadow-xs' : 'text-ink-muted hover:text-forest'
-                }`}
-                aria-pressed={isHi}
-              >
-                हिं
-              </button>
-            </div>
+            {/* Language Selector */}
+            <LanguageSelector />
           </div>
         </div>
       </header>
@@ -418,9 +397,9 @@ export const LoginPage: React.FC = () => {
           <picture>
             <source srcSet="/images/login-bg.webp" type="image/webp" />
             <img
-              src="/images/login-bg.svg"
-              alt=""
-              className="w-full h-full object-cover opacity-60"
+              src="/images/senior-indian.jpg"
+              alt="Elderly Care"
+              className="w-full h-full object-cover opacity-30"
             />
           </picture>
           <div className="absolute inset-0 bg-mint/80 backdrop-blur-2xs" />

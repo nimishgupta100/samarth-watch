@@ -48,10 +48,14 @@ import {
   Shield,
   SunMedium,
   CheckSquare,
+  Video,
 } from 'lucide-react';
 import { useWearable } from '../wearables/useWearable';
 import { bandConnectionManager } from '../wearables/BandConnectionManager';
 import { LocationCollector, LocationSharingChoice } from '../utils/locationService';
+import { DoctorCareSection } from '../components/telehealth/DoctorCareSection';
+import { DoctorConsultationModal } from '../components/telehealth/DoctorConsultationModal';
+import { LanguageSelector } from '../components/common/LanguageSelector';
 
 type SeniorScreen =
   | 'language_picker'
@@ -136,6 +140,7 @@ export const SeniorHome: React.FC = () => {
   const [screen, setScreen] = useState<SeniorScreen>(
     seniorLanguageChosen ? 'home' : 'language_picker'
   );
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
 
   // Screen Title Hook per screen
   usePageTitle(
@@ -530,7 +535,17 @@ export const SeniorHome: React.FC = () => {
             <header className="space-y-3 pt-2">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <InitialsAvatar name={seniorName} size="xl" className="shrink-0 w-14 h-14 sm:w-16 sm:h-16 text-[22px] sm:text-[24px]" />
+                  <div className="relative shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border-2 border-[#CBDCD2] shadow-xs bg-[#EBF3EE] flex items-center justify-center">
+                    <img
+                      src="/images/senior-indian.jpg"
+                      alt={seniorName}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                    <InitialsAvatar name={seniorName} size="xl" className="absolute inset-0 w-full h-full text-[20px]" />
+                  </div>
                   <div className="min-w-0">
                     <h1 className="text-[24px] sm:text-[32px] font-bold text-[#132A22] leading-tight truncate">
                       {getGreeting(language, seniorName)}
@@ -541,18 +556,21 @@ export const SeniorHome: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Notification Bell */}
-                <button
-                  type="button"
-                  onClick={() => setScreen('notifications')}
-                  className="w-14 h-14 sm:w-16 sm:h-16 min-h-[56px] sm:min-h-[64px] min-w-[56px] sm:min-w-[64px] rounded-2xl bg-white hover:bg-[#F4F8F5] border-2 border-[#CBDCD2] text-[#132A22] flex items-center justify-center relative transition-colors focus:ring-4 focus:ring-[#1C3F32] shrink-0 active:scale-95 shadow-xs"
-                  aria-label="Notifications"
-                >
-                  <Bell className="w-6 h-6 sm:w-7 sm:h-7" />
-                  {roleNotifications.length > 0 && (
-                    <span className="absolute top-2 right-2 w-3.5 h-3.5 bg-[#C93B2B] rounded-full ring-2 ring-white" />
-                  )}
-                </button>
+                <div className="flex items-center gap-2">
+                  <LanguageSelector className="hidden sm:inline-block" />
+                  {/* Notification Bell */}
+                  <button
+                    type="button"
+                    onClick={() => setScreen('notifications')}
+                    className="w-14 h-14 sm:w-16 sm:h-16 min-h-[56px] sm:min-h-[64px] min-w-[56px] sm:min-w-[64px] rounded-2xl bg-white hover:bg-[#F4F8F5] border-2 border-[#CBDCD2] text-[#132A22] flex items-center justify-center relative transition-colors focus:ring-4 focus:ring-[#1C3F32] shrink-0 active:scale-95 shadow-xs"
+                    aria-label="Notifications"
+                  >
+                    <Bell className="w-6 h-6 sm:w-7 sm:h-7" />
+                    {roleNotifications.length > 0 && (
+                      <span className="absolute top-2 right-2 w-3.5 h-3.5 bg-[#C93B2B] rounded-full ring-2 ring-white" />
+                    )}
+                  </button>
+                </div>
               </div>
 
               {/* Dedicated Listen Button (icon + word "Listen", full width comfortable bar on mobile) */}
@@ -839,7 +857,15 @@ export const SeniorHome: React.FC = () => {
                 className={`w-full min-h-[88px] p-4 sm:p-5 rounded-2xl ${cardBg} hover:border-[#1C3F32] text-left flex items-center justify-between gap-4 transition-colors focus:ring-4 focus:ring-[#1C3F32]`}
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl bg-[#EBF3EE] border border-[#CBDCD2] text-[#1C3F32] flex items-center justify-center shrink-0">
+                  <div className="w-16 h-16 rounded-2xl overflow-hidden border border-[#CBDCD2] text-[#1C3F32] flex items-center justify-center shrink-0 bg-[#EBF3EE]">
+                    <img
+                      src="/images/coordinator-male.jpg"
+                      alt="Nimish Gupta"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
                     <Phone className="w-8 h-8" />
                   </div>
                   <div>
@@ -847,13 +873,49 @@ export const SeniorHome: React.FC = () => {
                       {t.actionTalkCoordinator || 'Talk to my coordinator'}
                     </div>
                     <div className="text-[18px] text-[#4A6B5D]">
-                      {selectedSenior.assignedCoordinatorName || 'Nimish Gupta'}
+                      {selectedSenior.assignedCoordinatorName || 'Nimish Gupta'} • +91 9368059741
                     </div>
                   </div>
                 </div>
                 <ChevronRight className="w-7 h-7 text-[#4A6B5D] shrink-0" />
               </button>
+
+              {/* Row 4: Doctor Video Consultation (inspired by healthcare design reference) */}
+              <button
+                type="button"
+                onClick={() => setIsDocModalOpen(true)}
+                className="w-full min-h-[96px] p-4 sm:p-5 rounded-2xl bg-teal-800 text-white hover:bg-teal-900 text-left flex items-center justify-between gap-4 transition-all shadow-md focus:ring-4 focus:ring-teal-500 active:scale-[0.99]"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/40 shadow-sm shrink-0 bg-teal-950 flex items-center justify-center">
+                    <img
+                      src="/images/doctor-male.jpg"
+                      alt="Dr. K. S. Ramanathan"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <div className="text-[26px] sm:text-[28px] font-bold text-white leading-tight flex items-center gap-2">
+                      <span>{language === 'hi' ? 'डॉक्टर से वीडियो परामर्श' : 'Doctor Video Call'}</span>
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                    </div>
+                    <div className="text-[17px] sm:text-[18px] text-teal-200">
+                      Dr. K. S. Ramanathan • {language === 'hi' ? 'विशेषज्ञ परामर्श' : 'Specialist Consultation'}
+                    </div>
+                  </div>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white shrink-0">
+                  <Video className="w-6 h-6 text-white" />
+                </div>
+              </button>
             </div>
+
+            {/* 4b. MODERN TOP DOCTORS & HEALTH MONITORING (matching uploaded design) */}
+            <DoctorCareSection
+              onCallCoordinator={() => setScreen('appointment_request')}
+              seniorName={seniorName}
+              className="pt-2"
+            />
 
             {/* 5. ONE LARGE ROW "MORE" (>= 72px tall) */}
             <button
@@ -2012,6 +2074,13 @@ export const SeniorHome: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Video Consultation Theater Modal */}
+      <DoctorConsultationModal
+        isOpen={isDocModalOpen}
+        onClose={() => setIsDocModalOpen(false)}
+        seniorName={seniorName}
+      />
     </div>
   );
 };

@@ -91,6 +91,15 @@ export interface CheckInRecord {
   recordedBy: 'senior' | 'coordinator';
 }
 
+export interface ChatMessageRecord {
+  id: string;
+  seniorId: string;
+  senderRole: 'family' | 'coordinator';
+  senderName: string;
+  text: string;
+  timestamp: number;
+}
+
 export interface VoiceNoteRecord {
   id: string;
   seniorId: string;
@@ -202,6 +211,7 @@ export interface AppStateData {
   sosEvents: SosEventRecord[];
   notifications: AppNotificationRecord[];
   changeRequests: MedicineChangeRequestRecord[];
+  chatMessages?: ChatMessageRecord[];
   locationReadings?: LocationReading[];
 }
 
@@ -279,4 +289,5 @@ export const INITIAL_SEED_DATA: AppStateData = {
   sosEvents: [],
   notifications: [],
   changeRequests: [],
+  chatMessages: [],
 };

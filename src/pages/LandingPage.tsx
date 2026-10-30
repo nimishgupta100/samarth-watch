@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, roleHomePath } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { LanguageSelector } from '../components/common/LanguageSelector';
 import {
   Activity,
   ArrowRight,
@@ -269,30 +270,7 @@ export const LandingPage: React.FC = () => {
 
           {/* Right Action: Language Selector & Auth Button */}
           <div className="hidden sm:flex items-center gap-3">
-            {/* Language Selector */}
-            <div className="flex items-center gap-1 bg-mint p-1 rounded-lg border border-mint-border text-xs font-bold">
-              <Languages className="w-3.5 h-3.5 text-forest ml-1" aria-hidden="true" />
-              <button
-                type="button"
-                onClick={() => setLanguage('en')}
-                className={`px-2 py-0.5 rounded transition-colors ${
-                  !isHi ? 'bg-forest text-cream shadow-xs' : 'text-ink-muted hover:text-forest'
-                }`}
-                aria-pressed={!isHi}
-              >
-                EN
-              </button>
-              <button
-                type="button"
-                onClick={() => setLanguage('hi')}
-                className={`px-2 py-0.5 rounded font-hindi transition-colors ${
-                  isHi ? 'bg-forest text-cream shadow-xs' : 'text-ink-muted hover:text-forest'
-                }`}
-                aria-pressed={isHi}
-              >
-                हिं
-              </button>
-            </div>
+            <LanguageSelector />
 
             {/* Primary Action Button */}
             {currentUser ? (
@@ -520,9 +498,8 @@ export const LandingPage: React.FC = () => {
                 <div className="relative rounded-xl overflow-hidden border border-mint-border bg-cream shadow-xs">
                   {/* Photo with flat scrim */}
                   <picture>
-                    <source srcSet="/images/hero-senior-home.webp" type="image/webp" />
                     <img
-                      src="/images/hero-senior-home.svg"
+                      src="/images/senior-indian.jpg"
                       alt={isHi ? 'घर पर वरिष्ठ नागरिक की देखभाल का परिवेश' : 'Senior citizen peaceful home setting with warm natural lighting'}
                       width={600}
                       height={420}
@@ -678,9 +655,8 @@ export const LandingPage: React.FC = () => {
               <div className="lg:col-span-5">
                 <div className="relative rounded-xl overflow-hidden border border-mint-border bg-mint shadow-xs">
                   <picture>
-                    <source srcSet="/images/split-senior-care.webp" type="image/webp" />
                     <img
-                      src="/images/split-senior-care.svg"
+                      src="/images/doctor-male.jpg"
                       alt={isHi ? 'केयर समन्वय और पारिवारिक बातचीत' : 'Care Coordinator speaking gently with elder at home'}
                       width={500}
                       height={380}

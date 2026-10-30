@@ -5,6 +5,17 @@ interface InitialsAvatarProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
   shape?: 'rounded' | 'square';
+  imageUrl?: string;
+}
+
+export function getKnownPhoto(name?: string | null): string | undefined {
+  if (!name) return undefined;
+  const lower = name.toLowerCase();
+  if (lower.includes('kamla') || lower.includes('कमला')) return '/images/senior-indian.jpg';
+  if (lower.includes('nimish') || lower.includes('निमिष')) return '/images/coordinator-male.jpg';
+  if (lower.includes('karishma') || lower.includes('करिश्मा')) return '/images/family-daughter.jpg';
+  if (lower.includes('ramanathan') || lower.includes('doctor') || lower.includes('डॉ.')) return '/images/doctor-male.jpg';
+  return undefined;
 }
 
 /**
@@ -56,16 +67,18 @@ export function getInitials(name?: string | null): string {
 }
 
 /**
- * Avatar displaying person's initials on a flat tint (pale sage/mint).
- * Never uses stock or AI-generated photos.
+ * Avatar displaying person's photo or initials with clean fallback.
  */
 export const InitialsAvatar: React.FC<InitialsAvatarProps> = ({
   name,
   size = 'md',
   className = '',
   shape = 'rounded',
+  imageUrl,
 }) => {
+  const [imgError, setImgError] = React.useState(false);
   const initials = getInitials(name);
+  const photo = imageUrl || getKnownPhoto(name);
 
   const sizeClasses = {
     sm: 'w-8 h-8 text-xs',
@@ -74,15 +87,24 @@ export const InitialsAvatar: React.FC<InitialsAvatarProps> = ({
     xl: 'w-16 h-16 text-xl',
   }[size];
 
-  const shapeClass = shape === 'square' ? 'rounded-lg' : 'rounded-lg';
+  const shapeClass = shape === 'square' ? 'rounded-xl' : 'rounded-2xl';
 
   return (
     <div
-      className={`inline-flex items-center justify-center font-bold tracking-tight select-none bg-mint-deep text-forest border border-border shadow-xs ${sizeClasses} ${shapeClass} ${className}`}
+      className={`relative inline-flex items-center justify-center font-bold tracking-tight select-none overflow-hidden bg-mint-deep text-forest border border-border shadow-xs ${sizeClasses} ${shapeClass} ${className}`}
       aria-label={name || 'Avatar'}
       role="img"
     >
-      <span>{initials}</span>
+      {photo && !imgError ? (
+        <img
+          src={photo}
+          alt={name || 'Avatar'}
+          onError={() => setImgError(true)}
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <span>{initials}</span>
+      )}
     </div>
   );
 };
