@@ -199,8 +199,8 @@ export const SeniorDetail: React.FC = () => {
             <div className={`w-16 h-16 rounded-xl flex flex-col items-center justify-center text-white shrink-0 ${
               senior.currentUrgency === 'critical' ? 'bg-red-700' : 'bg-amber-600'
             }`}>
-              <span className="text-2xl font-black">{senior.currentRiskScore}</span>
-              <span className="text-[9px] font-bold uppercase tracking-wider opacity-90">Score</span>
+              <span className="text-2xl font-black">{((senior.currentRiskScore || 0) / 10).toFixed(1)}</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider opacity-90">/10 Score</span>
             </div>
 
             <div>
@@ -351,7 +351,7 @@ export const SeniorDetail: React.FC = () => {
                   "Why This Score": Additive Risk Attribution
                 </h3>
                 <span className="text-xs font-black bg-slate-100 text-slate-800 px-2 py-0.5 rounded-md border border-slate-200">
-                  Total: {totalCalculatedScore} / 100
+                  Total: {(totalCalculatedScore / 10).toFixed(1)} / 10
                 </span>
               </div>
               <p className="text-xs text-slate-500 mb-4">
@@ -1214,7 +1214,7 @@ export const SeniorDetail: React.FC = () => {
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
                   <div className="flex items-center justify-between font-bold text-slate-900 mb-1">
                     <span>{d.date}</span>
-                    <span className="text-[11px] font-mono text-slate-600">Risk Score: {d.riskScore}/100</span>
+                    <span className="text-[11px] font-mono text-slate-600">Risk Score: {(d.riskScore / 10).toFixed(1)}/10</span>
                   </div>
                   <div className="text-slate-600 space-y-1">
                     <div>Systolic BP: <strong>{d.vitals.systolicBp} mmHg</strong> : Sugar: <strong>{d.vitals.fastingSugar} mg/dL</strong></div>

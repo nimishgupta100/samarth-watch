@@ -65,7 +65,7 @@ export const PrivacySafety: React.FC = () => {
       externalCloud: { allowed: true, note: 'Formatted letter text' }
     },
     {
-      resource: 'Additive Risk Score Breakdown (0-100)',
+      resource: 'Additive Risk Score Breakdown (0-10)',
       coordinator: { allowed: true, note: 'Actionable reason chips' },
       manager: { allowed: true, note: 'Queue balance and triage' },
       family: { allowed: false, note: 'Never shown numeric score' },

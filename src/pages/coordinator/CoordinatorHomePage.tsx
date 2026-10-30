@@ -407,7 +407,7 @@ export const CoordinatorHomePage: React.FC = () => {
 
                         <div className="flex items-center gap-3 text-[11px] text-ink-muted mt-1.5 flex-wrap">
                           <span>Last check-in: Today 08:30 AM</span>
-                          <span>Score: {senior.currentRiskScore}/100</span>
+                          <span>Score: {((senior.currentRiskScore || 0) / 10).toFixed(1)}/10</span>
                         </div>
                       </div>
                     </div>

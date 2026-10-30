@@ -59,6 +59,7 @@ import {
   CohortSeniorSummary,
   CohortDayRecord 
 } from '../../data/cohortDatabase';
+import { repository } from '../../data/repository';
 import { 
   n8nAgentService, 
   CoordinatorAgentTask, 
@@ -81,7 +82,6 @@ export const CoordinatorSeniorProfilePage: React.FC<CoordinatorSeniorProfilePage
   const {
     t,
     seniors,
-    doses,
     medicines,
     addMedicine,
     updateMedicine,
@@ -96,6 +96,25 @@ export const CoordinatorSeniorProfilePage: React.FC<CoordinatorSeniorProfilePage
     healthReadings,
     todayCheckinAnswer,
   } = useApp();
+
+  // Read doses directly for the viewed senior (not selectedSenior from context)
+  const [repoRev, setRepoRev] = useState(0);
+  useEffect(() => {
+    return repository.subscribe(() => setRepoRev((v) => v + 1));
+  }, []);
+  const doses = useMemo(() => {
+    if (!activeId) return [];
+    return repository.getDoses(activeId).map((d) => ({
+      id: d.id,
+      medicineName: d.medicineName,
+      dosageInstructions: d.dosageInstructions,
+      scheduledTime: d.scheduledTime,
+      scheduledTimestamp: d.scheduledTimestamp,
+      status: d.status as any,
+      confirmedBy: d.confirmedBy,
+      remindedCount: 0,
+    }));
+  }, [activeId, repoRev]);
 
   const cohortSenior = useMemo(() => {
     return activeId ? getCohortSenior(activeId) : undefined;
@@ -507,7 +526,7 @@ export const CoordinatorSeniorProfilePage: React.FC<CoordinatorSeniorProfilePage
                 />
               </div>
               <p className="text-xs text-sage-light mt-1">
-                Risk Score: <span className="font-bold text-cream">{senior.currentRiskScore}/100</span> : ID {senior.id}
+                Risk Score: <span className="font-bold text-cream">{((senior.currentRiskScore || 0) / 10).toFixed(1)}/10</span> : ID {senior.id}
               </p>
             </div>
           </div>
@@ -735,7 +754,7 @@ export const CoordinatorSeniorProfilePage: React.FC<CoordinatorSeniorProfilePage
           <div className="bg-cream border border-border rounded-xl p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-bold text-forest uppercase tracking-wider">
-                Additive Risk Breakdown ({senior.currentRiskScore}/100)
+                Additive Risk Breakdown ({((senior.currentRiskScore || 0) / 10).toFixed(1)}/10)
               </h4>
               <span className="text-xs text-ink-muted">Calibrated against baseline</span>
             </div>

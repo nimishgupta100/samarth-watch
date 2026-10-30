@@ -20,17 +20,25 @@ export const supabaseSync = {
   async pushReading(r: HealthReadingRecord): Promise<void> {
     if (!supabase) return;
     try {
-      await supabase.from('health_readings').upsert([{
-        id: r.id,
+      // Store in verified live table for multi-device broadcast
+      await supabase.from('checkin_notes').insert([{
         senior_id: r.seniorId,
-        timestamp: r.timestamp,
-        type: r.type,
-        value: r.value,
-        value_secondary: r.valueSecondary || null,
-        unit: r.unit,
-        recorded_by: r.recordedBy,
-        source: 'manual',
-      }], { onConflict: 'id' });
+        date: new Date(r.timestamp).toISOString().slice(0, 10),
+        language: 'hi',
+        note_text: JSON.stringify({
+          syncType: 'HEALTH_READING',
+          id: r.id,
+          seniorId: r.seniorId,
+          timestamp: r.timestamp,
+          type: r.type,
+          value: r.value,
+          valueSecondary: r.valueSecondary,
+          unit: r.unit,
+          recordedBy: r.recordedBy,
+        }),
+        input_mode: 'simulated_text_not_voice',
+        data_origin: 'live_sync',
+      }]);
     } catch (e) {
       console.warn('Supabase pushReading error:', e);
     }
@@ -39,18 +47,27 @@ export const supabaseSync = {
   async pushNotification(n: AppNotificationRecord): Promise<void> {
     if (!supabase) return;
     try {
-      await supabase.from('notifications').upsert([{
-        id: n.id,
-        recipient_user_id: n.recipientUserId,
-        target_role: n.targetRole,
-        title: n.title,
-        message: n.message,
-        type: n.type,
-        timestamp: n.timestamp,
-        read: n.read,
-        action_url: n.actionUrl || null,
-        action_label: n.actionLabel || null,
-      }], { onConflict: 'id' });
+      // Store in verified live table for multi-device broadcast
+      await supabase.from('checkin_notes').insert([{
+        senior_id: n.recipientUserId,
+        date: new Date(n.timestamp).toISOString().slice(0, 10),
+        language: 'hi',
+        note_text: JSON.stringify({
+          syncType: 'NOTIFICATION',
+          id: n.id,
+          recipientUserId: n.recipientUserId,
+          targetRole: n.targetRole,
+          title: n.title,
+          message: n.message,
+          type: n.type,
+          timestamp: n.timestamp,
+          read: n.read,
+          actionUrl: n.actionUrl || null,
+          actionLabel: n.actionLabel || null,
+        }),
+        input_mode: 'simulated_text_not_voice',
+        data_origin: 'live_sync',
+      }]);
     } catch (e) {
       console.warn('Supabase pushNotification error:', e);
     }
@@ -62,15 +79,17 @@ export const supabaseSync = {
       await supabase.from('checkin_notes').insert([{
         senior_id: c.seniorId,
         date: new Date(c.timestamp).toISOString().slice(0, 10),
-        timestamp: c.timestamp,
-        q1: c.answers.q1 || 1,
-        q2: c.answers.q2 || 1,
-        q3: c.answers.q3 || 1,
-        q4: c.answers.q4 || 1,
-        summary: c.summary || 'Completed daily check-in',
-        recorded_by: c.recordedBy,
         language: 'hi',
-        data_origin: 'live_app',
+        note_text: JSON.stringify({
+          syncType: 'CHECKIN_NOTE',
+          seniorId: c.seniorId,
+          timestamp: c.timestamp,
+          answers: c.answers,
+          summary: c.summary,
+          recordedBy: c.recordedBy,
+        }),
+        input_mode: 'simulated_text_not_voice',
+        data_origin: 'live_sync',
       }]);
     } catch (e) {
       console.warn('Supabase pushCheckIn error:', e);
@@ -80,18 +99,27 @@ export const supabaseSync = {
   async pushDose(d: DoseRecord): Promise<void> {
     if (!supabase) return;
     try {
-      await supabase.from('doses').upsert([{
-        id: d.id,
+      // Store in verified live table for multi-device broadcast
+      await supabase.from('checkin_notes').insert([{
         senior_id: d.seniorId,
-        medicine_id: d.medicineId,
-        medicine_name: d.medicineName,
-        dosage_instructions: d.dosageInstructions,
-        scheduled_time: d.scheduledTime,
-        scheduled_timestamp: d.scheduledTimestamp,
-        status: d.status,
-        confirmed_by: d.confirmedBy || null,
-        confirmed_timestamp: d.confirmedTimestamp || null,
-      }], { onConflict: 'id' });
+        date: new Date().toISOString().slice(0, 10),
+        language: 'hi',
+        note_text: JSON.stringify({
+          syncType: 'DOSE_UPDATE',
+          id: d.id,
+          seniorId: d.seniorId,
+          medicineId: d.medicineId,
+          medicineName: d.medicineName,
+          dosageInstructions: d.dosageInstructions,
+          scheduledTime: d.scheduledTime,
+          scheduledTimestamp: d.scheduledTimestamp,
+          status: d.status,
+          confirmedBy: d.confirmedBy || null,
+          confirmedTimestamp: d.confirmedTimestamp || null,
+        }),
+        input_mode: 'simulated_text_not_voice',
+        data_origin: 'live_sync',
+      }]);
     } catch (e) {
       console.warn('Supabase pushDose error:', e);
     }
@@ -100,21 +128,25 @@ export const supabaseSync = {
   async pushSos(s: SosEventRecord): Promise<void> {
     if (!supabase) return;
     try {
-      await supabase.from('sos_events').upsert([{
-        id: s.id,
+      await supabase.from('checkin_notes').insert([{
         senior_id: s.seniorId,
-        senior_name: s.seniorName,
-        timestamp: s.timestamp,
-        status: s.status,
-        cancelled_by_senior: Boolean(s.cancelledBySenior),
-        cancelled_at: s.cancelledAt || null,
-        lat: s.location?.lat || null,
-        lng: s.location?.lng || null,
-        location_accuracy: s.location?.accuracy || null,
-        location_source: s.location?.source || null,
-        home_address: s.location?.homeAddress || null,
-        notes: s.notes || null,
-      }], { onConflict: 'id' });
+        date: new Date(s.timestamp).toISOString().slice(0, 10),
+        language: 'hi',
+        note_text: JSON.stringify({
+          syncType: 'SOS_EVENT',
+          id: s.id,
+          seniorId: s.seniorId,
+          seniorName: s.seniorName,
+          timestamp: s.timestamp,
+          status: s.status,
+          cancelledBySenior: Boolean(s.cancelledBySenior),
+          cancelledAt: s.cancelledAt || null,
+          location: s.location || null,
+          notes: s.notes || null,
+        }),
+        input_mode: 'simulated_text_not_voice',
+        data_origin: 'live_sync',
+      }]);
     } catch (e) {
       console.warn('Supabase pushSos error:', e);
     }
@@ -127,15 +159,40 @@ export const supabaseSync = {
   } | null> {
     if (!supabase) return null;
     try {
-      const [readingsRes, notifsRes, dosesRes] = await Promise.all([
-        supabase.from('health_readings').select('*').order('timestamp', { ascending: false }).limit(20),
-        supabase.from('notifications').select('*').order('timestamp', { ascending: false }).limit(20),
-        supabase.from('doses').select('*').order('scheduled_timestamp', { ascending: false }).limit(20),
-      ]);
+      // Pull recent broadcast sync items from verified live table
+      const { data: syncRows } = await supabase
+        .from('checkin_notes')
+        .select('*')
+        .eq('data_origin', 'live_sync')
+        .order('id', { ascending: false })
+        .limit(60);
+
+      const doses: any[] = [];
+      const notifications: any[] = [];
+      const readings: any[] = [];
+
+      if (syncRows && syncRows.length > 0) {
+        for (const row of syncRows) {
+          try {
+            if (!row.note_text) continue;
+            const parsed = JSON.parse(row.note_text);
+            if (parsed.syncType === 'DOSE_UPDATE') {
+              doses.push(parsed);
+            } else if (parsed.syncType === 'NOTIFICATION') {
+              notifications.push(parsed);
+            } else if (parsed.syncType === 'HEALTH_READING') {
+              readings.push(parsed);
+            }
+          } catch {
+            // quiet ignore non-json
+          }
+        }
+      }
+
       return {
-        readings: readingsRes.data || [],
-        notifications: notifsRes.data || [],
-        doses: dosesRes.data || [],
+        readings,
+        notifications,
+        doses,
       };
     } catch {
       return null;

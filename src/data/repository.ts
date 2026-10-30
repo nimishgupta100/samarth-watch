@@ -97,10 +97,10 @@ class LocalStorageRepository implements ISamarthRepository {
         console.warn('BroadcastChannel init error:', e);
       }
 
-      // Background cloud sync polling (every 4 seconds) to pull updates from other devices
+      // Background cloud sync polling (every 2.5 seconds) to pull updates from other devices
       this.syncInterval = setInterval(() => {
         this.pollCloudUpdates();
-      }, 4000);
+      }, 2500);
     }
   }
 
@@ -115,16 +115,17 @@ class LocalStorageRepository implements ISamarthRepository {
       // Merge remote readings
       if (updates.readings && updates.readings.length > 0) {
         for (const rem of updates.readings) {
-          if (!state.readings.some((r) => r.id === rem.id)) {
+          const remId = rem.id;
+          if (!state.readings.some((r) => r.id === remId)) {
             state.readings.unshift({
-              id: rem.id,
-              seniorId: rem.senior_id,
-              timestamp: rem.timestamp,
+              id: remId,
+              seniorId: rem.seniorId || rem.senior_id,
+              timestamp: rem.timestamp || Date.now(),
               type: rem.type,
               value: Number(rem.value),
-              valueSecondary: rem.value_secondary ? Number(rem.value_secondary) : undefined,
+              valueSecondary: rem.valueSecondary || rem.value_secondary ? Number(rem.valueSecondary || rem.value_secondary) : undefined,
               unit: rem.unit || '',
-              recordedBy: rem.recorded_by || 'senior',
+              recordedBy: rem.recordedBy || rem.recorded_by || 'senior',
             });
             changed = true;
           }
@@ -134,18 +135,19 @@ class LocalStorageRepository implements ISamarthRepository {
       // Merge remote notifications
       if (updates.notifications && updates.notifications.length > 0) {
         for (const rem of updates.notifications) {
-          if (!state.notifications.some((n) => n.id === rem.id)) {
+          const remId = rem.id;
+          if (!state.notifications.some((n) => n.id === remId)) {
             state.notifications.unshift({
-              id: rem.id,
-              recipientUserId: rem.recipient_user_id,
-              targetRole: rem.target_role,
+              id: remId,
+              recipientUserId: rem.recipientUserId || rem.recipient_user_id,
+              targetRole: rem.targetRole || rem.target_role,
               title: rem.title,
               message: rem.message,
               type: rem.type,
-              timestamp: rem.timestamp,
+              timestamp: rem.timestamp || Date.now(),
               read: Boolean(rem.read),
-              actionUrl: rem.action_url || undefined,
-              actionLabel: rem.action_label || undefined,
+              actionUrl: rem.actionUrl || rem.action_url || undefined,
+              actionLabel: rem.actionLabel || rem.action_label || undefined,
             });
             changed = true;
           }
@@ -155,11 +157,44 @@ class LocalStorageRepository implements ISamarthRepository {
       // Merge remote dose updates
       if (updates.doses && updates.doses.length > 0) {
         for (const rem of updates.doses) {
-          const localDose = state.doses.find((d) => d.id === rem.id);
-          if (localDose && localDose.status !== rem.status) {
-            localDose.status = rem.status;
-            localDose.confirmedBy = rem.confirmed_by || localDose.confirmedBy;
-            localDose.confirmedTimestamp = rem.confirmed_timestamp || localDose.confirmedTimestamp;
+          const remId = rem.id;
+          const remSeniorId = rem.seniorId || rem.senior_id;
+          const remMedName = rem.medicineName || rem.medicine_name;
+          const remStatus = rem.status;
+          const remConfirmedBy = rem.confirmedBy || rem.confirmed_by;
+          const remConfirmedTs = rem.confirmedTimestamp || rem.confirmed_timestamp;
+
+          // 1. Try to find by exact ID
+          let localDose = state.doses.find((d) => d.id === remId);
+
+          // 2. If not found by ID, match by seniorId + medicine name or today's baseline dose
+          if (!localDose && remSeniorId) {
+            localDose = state.doses.find(
+              (d) => d.seniorId === remSeniorId && (d.medicineName === remMedName || d.id === 'dose-kamla-today-001')
+            );
+          }
+
+          if (localDose) {
+            if (localDose.status !== remStatus || localDose.confirmedBy !== remConfirmedBy) {
+              localDose.status = remStatus;
+              localDose.confirmedBy = remConfirmedBy || localDose.confirmedBy;
+              localDose.confirmedTimestamp = remConfirmedTs || localDose.confirmedTimestamp;
+              changed = true;
+            }
+          } else if (remId && remSeniorId) {
+            // New dose created on another device
+            state.doses.push({
+              id: remId,
+              seniorId: remSeniorId,
+              medicineId: rem.medicineId || rem.medicine_id || 'med-001',
+              medicineName: remMedName || 'Medicine',
+              dosageInstructions: rem.dosageInstructions || rem.dosage_instructions || '',
+              scheduledTime: rem.scheduledTime || rem.scheduled_time || '08:30 AM',
+              scheduledTimestamp: rem.scheduledTimestamp || rem.scheduled_timestamp || Date.now(),
+              status: remStatus || 'pending',
+              confirmedBy: remConfirmedBy,
+              confirmedTimestamp: remConfirmedTs,
+            });
             changed = true;
           }
         }

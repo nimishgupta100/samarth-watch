@@ -399,7 +399,7 @@ export const CoordinatorSeniorsPage: React.FC = () => {
                                 <span>Enrolled live senior</span>
                               </span>
                               <span className="font-semibold text-forest">
-                                Score: {senior.currentRiskScore}/100
+                                Score: {((senior.currentRiskScore || 0) / 10).toFixed(1)}/10
                               </span>
                             </div>
                           </div>
@@ -456,7 +456,7 @@ export const CoordinatorSeniorsPage: React.FC = () => {
                             <div className="flex items-center justify-between text-[11px] text-ink-muted mt-2 pt-1.5 border-t border-border/50">
                               <span>Adherence: {cs.adherenceRate}%</span>
                               <span className="font-bold text-forest">
-                                Risk: {cs.currentRiskScore}/100
+                                Risk: {(cs.currentRiskScore / 10).toFixed(1)}/10
                               </span>
                             </div>
                           </div>

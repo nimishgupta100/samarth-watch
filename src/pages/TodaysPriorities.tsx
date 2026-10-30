@@ -791,7 +791,7 @@ export const TodaysPriorities: React.FC = () => {
             </div>
             <div>
               <div className="text-xs font-bold text-red-950">Critical Priority</div>
-              <div className="text-[11px] text-red-700">Risk Score &gt; 70</div>
+              <div className="text-[11px] text-red-700">Risk Score &gt; 7.0 / 10</div>
             </div>
           </div>
 
@@ -801,7 +801,7 @@ export const TodaysPriorities: React.FC = () => {
             </div>
             <div>
               <div className="text-xs font-bold text-amber-950">Moderate Watch</div>
-              <div className="text-[11px] text-amber-700">Risk Score 45 - 70</div>
+              <div className="text-[11px] text-amber-700">Risk Score 4.5 - 7.0 / 10</div>
             </div>
           </div>
 
@@ -1032,8 +1032,8 @@ export const TodaysPriorities: React.FC = () => {
                           isCritical ? 'bg-red-700' : 'bg-amber-600'
                         }`}
                       >
-                        <span className="text-xl font-black leading-none">{senior.currentRiskScore}</span>
-                        <span className="text-[9px] uppercase font-bold tracking-wider opacity-90">Risk</span>
+                        <span className="text-xl font-black leading-none">{((senior.currentRiskScore || 0) / 10).toFixed(1)}</span>
+                        <span className="text-[9px] uppercase font-bold tracking-wider opacity-90">/10 Risk</span>
                       </div>
 
                       {/* Senior Name, Age, City */}

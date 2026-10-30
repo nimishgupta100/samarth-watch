@@ -412,7 +412,7 @@ export const Navbar: React.FC = () => {
               >
                 {prioritySeniors.map(s => (
                   <option key={s.id} value={s.id}>
-                    {s.name} ({s.age}y, {s.city}) : Score: {s.currentRiskScore}
+                    {s.name} ({s.age}y, {s.city}) : Score: {((s.currentRiskScore || 0) / 10).toFixed(1)}/10
                   </option>
                 ))}
               </select>
