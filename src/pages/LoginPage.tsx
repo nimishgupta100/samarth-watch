@@ -447,32 +447,32 @@ export const LoginPage: React.FC = () => {
               </div>
 
               {/* 4 Distinct Role Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6 max-w-4xl mx-auto">
                 {/* 1. Family Member */}
                 <button
                   type="button"
                   onClick={() => handleSelectRole('family')}
-                  className="group text-left bg-cream hover:bg-cream-warm border border-mint-border hover:border-forest/40 rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2"
+                  className="group text-left bg-cream hover:bg-cream-warm border border-mint-border hover:border-forest/40 rounded-2xl p-4 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2 active:scale-[0.98]"
                 >
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-mint text-forest flex items-center justify-center shrink-0 border border-mint-border group-hover:scale-105 transition-transform">
-                        <Users className="w-6 h-6 text-forest" strokeWidth={1.75} />
+                      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-mint text-forest flex items-center justify-center shrink-0 border border-mint-border group-hover:scale-105 transition-transform">
+                        <Users className="w-5 h-5 sm:w-6 sm:h-6 text-forest" strokeWidth={1.75} />
                       </div>
                       <span className="px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-mint-deep text-forest border border-mint-border">
                         {L.roleFamilyBadge}
                       </span>
                     </div>
                     <div>
-                      <h2 className="text-xl font-extrabold text-forest group-hover:text-forest-dark transition-colors">
+                      <h2 className="text-lg sm:text-xl font-extrabold text-forest group-hover:text-forest-dark transition-colors">
                         {L.roleFamilyTitle}
                       </h2>
-                      <p className="text-xs sm:text-sm text-ink-muted leading-relaxed mt-1.5">
+                      <p className="text-xs sm:text-sm text-ink-muted leading-relaxed mt-1">
                         {L.roleFamilyDesc}
                       </p>
                     </div>
                   </div>
-                  <div className="pt-5 mt-4 border-t border-mint-border flex items-center justify-between text-xs font-bold text-forest group-hover:text-forest-dark">
+                  <div className="pt-3 mt-3 border-t border-mint-border flex items-center justify-between text-xs font-bold text-forest group-hover:text-forest-dark">
                     <span>{L.roleFamilyAction}</span>
                     <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
                   </div>
@@ -482,19 +482,19 @@ export const LoginPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleSelectRole('senior')}
-                  className="group text-left bg-cream hover:bg-cream-warm border border-mint-border hover:border-forest/40 rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2"
+                  className="group text-left bg-cream hover:bg-cream-warm border border-mint-border hover:border-forest/40 rounded-2xl p-4 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2 active:scale-[0.98]"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-mint text-forest flex items-center justify-center shrink-0 border border-mint-border group-hover:scale-105 transition-transform">
-                        <Heart className="w-6 h-6 text-forest" strokeWidth={1.75} />
+                      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-mint text-forest flex items-center justify-center shrink-0 border border-mint-border group-hover:scale-105 transition-transform">
+                        <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-forest" strokeWidth={1.75} />
                       </div>
                       <span className="px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-mint-deep text-forest border border-mint-border">
                         {L.roleSeniorBadge}
                       </span>
                     </div>
                     <div>
-                      <h2 className="text-xl font-extrabold text-forest group-hover:text-forest-dark transition-colors">
+                      <h2 className="text-lg sm:text-xl font-extrabold text-forest group-hover:text-forest-dark transition-colors">
                         {L.roleSeniorTitle}
                       </h2>
                       <p className="text-xs sm:text-sm text-ink-muted leading-relaxed mt-1.5">
@@ -502,7 +502,7 @@ export const LoginPage: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="pt-5 mt-4 border-t border-mint-border flex items-center justify-between text-xs font-bold text-forest group-hover:text-forest-dark">
+                  <div className="pt-4 mt-3 border-t border-mint-border flex items-center justify-between text-xs font-bold text-forest group-hover:text-forest-dark">
                     <span>{L.roleSeniorAction}</span>
                     <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
                   </div>
@@ -512,19 +512,19 @@ export const LoginPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleSelectRole('coordinator')}
-                  className="group text-left bg-cream hover:bg-cream-warm border border-mint-border hover:border-forest/40 rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2"
+                  className="group text-left bg-cream hover:bg-cream-warm border border-mint-border hover:border-forest/40 rounded-2xl p-4 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2 active:scale-[0.98]"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-mint text-forest flex items-center justify-center shrink-0 border border-mint-border group-hover:scale-105 transition-transform">
-                        <ShieldCheck className="w-6 h-6 text-forest" strokeWidth={1.75} />
+                      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-mint text-forest flex items-center justify-center shrink-0 border border-mint-border group-hover:scale-105 transition-transform">
+                        <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-forest" strokeWidth={1.75} />
                       </div>
                       <span className="px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-mint-deep text-forest border border-mint-border">
                         {L.roleCoordBadge}
                       </span>
                     </div>
                     <div>
-                      <h2 className="text-xl font-extrabold text-forest group-hover:text-forest-dark transition-colors">
+                      <h2 className="text-lg sm:text-xl font-extrabold text-forest group-hover:text-forest-dark transition-colors">
                         {L.roleCoordTitle}
                       </h2>
                       <p className="text-xs sm:text-sm text-ink-muted leading-relaxed mt-1.5">
@@ -532,7 +532,7 @@ export const LoginPage: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="pt-5 mt-4 border-t border-mint-border flex items-center justify-between text-xs font-bold text-forest group-hover:text-forest-dark">
+                  <div className="pt-4 mt-3 border-t border-mint-border flex items-center justify-between text-xs font-bold text-forest group-hover:text-forest-dark">
                     <span>{L.roleCoordAction}</span>
                     <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
                   </div>
@@ -542,27 +542,27 @@ export const LoginPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleSelectRole('ops')}
-                  className="group text-left bg-cream hover:bg-cream-warm border border-mint-border hover:border-forest/40 rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2"
+                  className="group text-left bg-cream hover:bg-cream-warm border border-mint-border hover:border-forest/40 rounded-2xl p-4 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-2 active:scale-[0.98]"
                 >
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-mint text-forest flex items-center justify-center shrink-0 border border-mint-border group-hover:scale-105 transition-transform">
-                        <BarChart3 className="w-6 h-6 text-forest" strokeWidth={1.75} />
+                      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-mint text-forest flex items-center justify-center shrink-0 border border-mint-border group-hover:scale-105 transition-transform">
+                        <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-forest" strokeWidth={1.75} />
                       </div>
                       <span className="px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-mint-deep text-forest border border-mint-border">
                         {L.roleOpsBadge}
                       </span>
                     </div>
                     <div>
-                      <h2 className="text-xl font-extrabold text-forest group-hover:text-forest-dark transition-colors">
+                      <h2 className="text-lg sm:text-xl font-extrabold text-forest group-hover:text-forest-dark transition-colors">
                         {L.roleOpsTitle}
                       </h2>
-                      <p className="text-xs sm:text-sm text-ink-muted leading-relaxed mt-1.5">
+                      <p className="text-xs sm:text-sm text-ink-muted leading-relaxed mt-1">
                         {L.roleOpsDesc}
                       </p>
                     </div>
                   </div>
-                  <div className="pt-5 mt-4 border-t border-mint-border flex items-center justify-between text-xs font-bold text-forest group-hover:text-forest-dark">
+                  <div className="pt-3 mt-3 border-t border-mint-border flex items-center justify-between text-xs font-bold text-forest group-hover:text-forest-dark">
                     <span>{L.roleOpsAction}</span>
                     <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
                   </div>

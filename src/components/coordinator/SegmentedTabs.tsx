@@ -26,7 +26,7 @@ export function SegmentedTabs<T extends string = string>({
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className={`inline-flex flex-wrap p-1 bg-mint-deep border border-border rounded-lg gap-1 ${className}`}
+      className={`flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth w-full p-1.5 bg-mint-deep/80 border border-border rounded-xl ${className}`}
     >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
@@ -37,10 +37,10 @@ export function SegmentedTabs<T extends string = string>({
             type="button"
             aria-selected={isActive}
             onClick={() => onChange(tab.id)}
-            className={`min-h-[44px] sm:min-h-[38px] px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors focus:outline-none focus:ring-2 focus:ring-forest focus:ring-offset-1 select-none ${
+            className={`min-h-[44px] sm:min-h-[38px] px-3.5 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all focus:outline-none focus:ring-2 focus:ring-forest shrink-0 select-none active:scale-95 ${
               isActive
                 ? 'bg-forest text-cream shadow-xs'
-                : 'text-ink-muted hover:text-ink hover:bg-cream/60'
+                : 'text-ink-muted hover:text-ink bg-white/70 hover:bg-cream border border-border/50'
             }`}
           >
             {tab.icon && <span className="shrink-0">{tab.icon}</span>}

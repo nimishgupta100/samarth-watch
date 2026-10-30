@@ -526,52 +526,52 @@ export const SeniorHome: React.FC = () => {
            ======================================================== */}
         {screen === 'home' && (
           <>
-            {/* 1. HEADER: Initials avatar (K), greeting with real name >= 32px, Notification bell, Listen button */}
-            <header className="flex items-center justify-between gap-3 pt-2">
-              <div className="flex items-center gap-3.5">
-                <InitialsAvatar name={seniorName} size="xl" className="shrink-0 w-16 h-16 text-[24px]" />
-                <div>
-                  <h1 className={headingClass}>
-                    {getGreeting(language, seniorName)}
-                  </h1>
-                  <p className="text-[18px] text-[#4A6B5D] font-medium">
-                    {language === 'hi' ? 'समर्थ साथी पोर्टल' : 'Senior Care Portal'}
-                  </p>
+            {/* 1. HEADER: Initials avatar, greeting, Notification bell, Listen button */}
+            <header className="space-y-3 pt-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <InitialsAvatar name={seniorName} size="xl" className="shrink-0 w-14 h-14 sm:w-16 sm:h-16 text-[22px] sm:text-[24px]" />
+                  <div className="min-w-0">
+                    <h1 className="text-[24px] sm:text-[32px] font-bold text-[#132A22] leading-tight truncate">
+                      {getGreeting(language, seniorName)}
+                    </h1>
+                    <p className="text-[16px] sm:text-[18px] text-[#4A6B5D] font-medium truncate">
+                      {language === 'hi' ? 'समर्थ साथी पोर्टल' : 'Senior Care Portal'}
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-2 shrink-0">
-                {/* Notification Bell (at least 64x64px) */}
+                {/* Notification Bell */}
                 <button
                   type="button"
                   onClick={() => setScreen('notifications')}
-                  className="w-16 h-16 min-h-[64px] min-w-[64px] rounded-2xl bg-white hover:bg-[#F4F8F5] border-2 border-[#CBDCD2] text-[#132A22] flex items-center justify-center relative transition-colors focus:ring-4 focus:ring-[#1C3F32]"
+                  className="w-14 h-14 sm:w-16 sm:h-16 min-h-[56px] sm:min-h-[64px] min-w-[56px] sm:min-w-[64px] rounded-2xl bg-white hover:bg-[#F4F8F5] border-2 border-[#CBDCD2] text-[#132A22] flex items-center justify-center relative transition-colors focus:ring-4 focus:ring-[#1C3F32] shrink-0 active:scale-95 shadow-xs"
                   aria-label="Notifications"
                 >
-                  <Bell className="w-7 h-7" />
+                  <Bell className="w-6 h-6 sm:w-7 sm:h-7" />
                   {roleNotifications.length > 0 && (
-                    <span className="absolute top-2 right-2 w-3.5 h-3.5 bg-[#C93B2B] rounded-full" />
+                    <span className="absolute top-2 right-2 w-3.5 h-3.5 bg-[#C93B2B] rounded-full ring-2 ring-white" />
                   )}
                 </button>
-
-                {/* Dedicated Listen Button (icon + one word "Listen", at least 64px tall, never wrapping) */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const homeText = `${getGreeting(language, seniorName)}. ${
-                      wearableDevice?.status === 'connected'
-                        ? 'Your health band is connected.'
-                        : 'Your band is not connected.'
-                    } ${dueDoseNow ? `Medicine due now: ${dueDoseNow.medicineName}.` : 'No medicines due right now.'}`;
-                    handleReadAloud(homeText);
-                  }}
-                  className="min-h-[64px] px-4 py-2 rounded-2xl bg-[#1C3F32] hover:bg-[#132A22] text-white font-bold text-[20px] flex items-center gap-2 whitespace-nowrap transition-colors focus:ring-4 focus:ring-[#1C3F32]"
-                  aria-label="Listen aloud"
-                >
-                  <Volume2 className="w-6 h-6 shrink-0" />
-                  <span>{t.listenOneWord || 'Listen'}</span>
-                </button>
               </div>
+
+              {/* Dedicated Listen Button (icon + word "Listen", full width comfortable bar on mobile) */}
+              <button
+                type="button"
+                onClick={() => {
+                  const homeText = `${getGreeting(language, seniorName)}. ${
+                    wearableDevice?.status === 'connected'
+                      ? 'Your health band is connected.'
+                      : 'Your band is not connected.'
+                  } ${dueDoseNow ? `Medicine due now: ${dueDoseNow.medicineName}.` : 'No medicines due right now.'}`;
+                  handleReadAloud(homeText);
+                }}
+                className="w-full min-h-[64px] px-5 py-3 rounded-2xl bg-[#1C3F32] hover:bg-[#132A22] text-white font-bold text-[20px] flex items-center justify-center gap-2.5 whitespace-nowrap transition-all active:scale-[0.99] focus:ring-4 focus:ring-[#1C3F32] shadow-sm"
+                aria-label="Listen aloud"
+              >
+                <Volume2 className="w-6 h-6 shrink-0" />
+                <span>{language === 'hi' ? 'आवाज में सुनें (Listen)' : 'Listen Aloud'}</span>
+              </button>
             </header>
 
             {/* Live Location Sharing Badge (shown only when live sharing is active) */}
@@ -1999,16 +1999,16 @@ export const SeniorHome: React.FC = () => {
       </div>
 
       {/* 6. SOS BAR: Fixed at bottom INSIDE column width (never wider than column), >= 80px tall, inside safe area */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#FAF8F5]/90 backdrop-blur-xs p-4 pb-[env(safe-area-inset-bottom,16px)]">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#FAF8F5]/95 backdrop-blur-md p-3 sm:p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="max-w-[700px] mx-auto w-full">
           <button
             type="button"
             onClick={handleEmergencySOS}
-            className="w-full min-h-[80px] bg-[#C93B2B] hover:bg-[#A82D20] active:bg-[#852317] text-white font-bold text-[26px] sm:text-[30px] rounded-2xl shadow-lg border-2 border-[#852317] flex items-center justify-center gap-3 transition-transform active:scale-[0.99] focus:outline-none focus:ring-4 focus:ring-[#C93B2B]"
+            className="w-full min-h-[80px] bg-[#C93B2B] hover:bg-[#A82D20] active:bg-[#852317] text-white font-bold text-[22px] sm:text-[28px] rounded-2xl shadow-lg border-2 border-[#852317] flex items-center justify-center gap-2.5 sm:gap-3 transition-transform active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-[#C93B2B]"
             aria-label="EMERGENCY HELP SOS"
           >
-            <ShieldAlert className="w-9 h-9 text-white shrink-0" strokeWidth={2.5} />
-            <span>EMERGENCY HELP (SOS)</span>
+            <ShieldAlert className="w-8 h-8 sm:w-9 sm:h-9 text-white shrink-0" strokeWidth={2.5} />
+            <span className="tracking-wide">EMERGENCY HELP (SOS)</span>
           </button>
         </div>
       </div>

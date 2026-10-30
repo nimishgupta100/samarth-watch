@@ -442,11 +442,11 @@ export const LandingPage: React.FC = () => {
       {/* ── Main Content ────────────────────────────────────────────────────── */}
       <main id="main-content" className="flex-1 w-full">
         {/* ── Section 1: Hero ───────────────────────────────────────────────── */}
-        <section className="relative overflow-hidden bg-mint pt-8 pb-16 sm:pt-14 sm:pb-24 border-b border-mint-border">
+        <section className="relative overflow-hidden bg-mint pt-6 pb-12 sm:pt-14 sm:pb-24 border-b border-mint-border">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
               {/* Left Column: Headlines and Actions */}
-              <div className="lg:col-span-7 space-y-6">
+              <div className="lg:col-span-7 space-y-5">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-mint-deep text-forest border border-mint-border">
                   <Activity className="w-3.5 h-3.5 text-forest" aria-hidden="true" strokeWidth={1.75} />
                   <span>{t.heroTag}</span>
@@ -515,8 +515,8 @@ export const LandingPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Right Column: Hero Photograph / Vector Scrim Slot */}
-              <div className="lg:col-span-5 relative">
+              {/* Right Column: Hero Photograph — hidden on mobile to save space */}
+              <div className="hidden lg:block lg:col-span-5 relative">
                 <div className="relative rounded-xl overflow-hidden border border-mint-border bg-cream shadow-xs">
                   {/* Photo with flat scrim */}
                   <picture>

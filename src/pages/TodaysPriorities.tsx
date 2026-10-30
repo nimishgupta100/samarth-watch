@@ -343,7 +343,7 @@ export const TodaysPriorities: React.FC = () => {
     <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-6">
 
       {/* COORDINATOR WORKSPACE MANAGEMENT TOOLS */}
-      <div className="bg-slate-900/90 backdrop-blur-md text-white rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-2xl space-y-4">
+      <div className="bg-slate-900/90 backdrop-blur-md text-white rounded-3xl p-4 sm:p-8 border border-slate-800 shadow-2xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-teal-400">
@@ -460,7 +460,7 @@ export const TodaysPriorities: React.FC = () => {
       {/* ACTIVE EMERGENCY SOS ALERT (TOP PRIORITY BANNER) */}
       {activeSosEvent && (
         <div
-          className={`border-2 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-md animate-fadeIn ${
+          className={`border-2 rounded-3xl p-4 sm:p-8 shadow-2xl backdrop-blur-md animate-fadeIn ${
             activeSosEvent.cancelledBySenior
               ? 'bg-amber-50/95 border-amber-400'
               : 'bg-red-50/95 border-red-600'
@@ -554,7 +554,7 @@ export const TodaysPriorities: React.FC = () => {
 
       {/* ACTIVE 30-MINUTE MEDICINE ESCALATION ALERTS */}
       {escalatedDoses.length > 0 && (
-        <div className="bg-white/95 backdrop-blur-md border-2 border-amber-400 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
+        <div className="bg-white/95 backdrop-blur-md border-2 border-amber-400 rounded-3xl p-4 sm:p-8 shadow-2xl space-y-4">
           <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-amber-900">
             <Pill className="w-4 h-4 text-amber-700" />
             <span>Medication Adherence Escalation Desk (30-Minute Threshold)</span>
@@ -603,7 +603,7 @@ export const TodaysPriorities: React.FC = () => {
 
       {/* PENDING MEDICINE SCHEDULE CHANGE REQUESTS FROM FAMILY */}
       {pendingChangeRequests.length > 0 && (
-        <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100/20 space-y-4">
+        <div className="bg-white/95 backdrop-blur-md rounded-3xl p-4 sm:p-8 shadow-2xl border border-slate-100/20 space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-blue-700" />
@@ -656,7 +656,7 @@ export const TodaysPriorities: React.FC = () => {
 
       {/* PENDING APPOINTMENT REQUESTS (IN-PERSON & GOOGLE MEET) */}
       {pendingAppointments.length > 0 && (
-        <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100/20 space-y-4">
+        <div className="bg-white/95 backdrop-blur-md rounded-3xl p-4 sm:p-8 shadow-2xl border border-slate-100/20 space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-teal-700" />
@@ -728,7 +728,7 @@ export const TodaysPriorities: React.FC = () => {
       )}
 
       {/* Hero Header Section */}
-      <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100/20">
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl p-4 sm:p-8 shadow-2xl border border-slate-100/20">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-teal-600 uppercase tracking-wider mb-1">
@@ -1657,3 +1657,4 @@ export const TodaysPriorities: React.FC = () => {
     </div>
   );
 };
+

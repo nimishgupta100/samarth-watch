@@ -513,11 +513,11 @@ export const CoordinatorSeniorProfilePage: React.FC<CoordinatorSeniorProfilePage
           </div>
 
           {/* Action Buttons: Call senior, Call family, Edit profile */}
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             {senior.phone && senior.phone !== 'Not added yet' ? (
               <a
                 href={`tel:${senior.phone}`}
-                className="min-h-[44px] px-3.5 py-2 bg-cream hover:bg-mint text-forest text-xs font-bold rounded-lg inline-flex items-center gap-1.5 transition-colors focus:outline-none focus:ring-2 focus:ring-cream"
+                className="min-h-[44px] px-2.5 sm:px-3.5 py-2 bg-cream hover:bg-mint text-forest text-xs font-bold rounded-lg inline-flex items-center gap-1.5 transition-colors focus:outline-none focus:ring-2 focus:ring-cream active:scale-95"
               >
                 <Phone className="w-4 h-4" />
                 <span>Call Senior</span>
@@ -526,7 +526,7 @@ export const CoordinatorSeniorProfilePage: React.FC<CoordinatorSeniorProfilePage
               <button
                 disabled
                 title="Phone number not added yet"
-                className="min-h-[44px] px-3.5 py-2 bg-cream/40 text-cream/70 text-xs font-bold rounded-lg inline-flex items-center gap-1.5 cursor-not-allowed"
+                className="min-h-[44px] px-2.5 sm:px-3.5 py-2 bg-cream/40 text-cream/70 text-xs font-bold rounded-lg inline-flex items-center gap-1.5 cursor-not-allowed"
               >
                 <Phone className="w-4 h-4" />
                 <span>Phone Not Added</span>
@@ -536,7 +536,7 @@ export const CoordinatorSeniorProfilePage: React.FC<CoordinatorSeniorProfilePage
             {senior.linkedFamilyPhone ? (
               <a
                 href={`tel:${senior.linkedFamilyPhone}`}
-                className="min-h-[44px] px-3.5 py-2 bg-forest-dark hover:bg-forest-dark/80 text-cream border border-sage/30 text-xs font-bold rounded-lg inline-flex items-center gap-1.5 transition-colors focus:outline-none focus:ring-2 focus:ring-cream"
+                className="min-h-[44px] px-2.5 sm:px-3.5 py-2 bg-forest-dark hover:bg-forest-dark/80 text-cream border border-sage/30 text-xs font-bold rounded-lg inline-flex items-center gap-1.5 transition-colors focus:outline-none focus:ring-2 focus:ring-cream active:scale-95"
               >
                 <Users className="w-4 h-4" />
                 <span>Call Family</span>
@@ -544,7 +544,7 @@ export const CoordinatorSeniorProfilePage: React.FC<CoordinatorSeniorProfilePage
             ) : (
               <button
                 disabled
-                className="min-h-[44px] px-3.5 py-2 bg-forest-dark/40 text-cream/70 border border-sage/20 text-xs font-bold rounded-lg inline-flex items-center gap-1.5 cursor-not-allowed"
+                className="min-h-[44px] px-2.5 sm:px-3.5 py-2 bg-forest-dark/40 text-cream/70 border border-sage/20 text-xs font-bold rounded-lg inline-flex items-center gap-1.5 cursor-not-allowed"
               >
                 <Users className="w-4 h-4" />
                 <span>Family Not Linked</span>
@@ -554,7 +554,7 @@ export const CoordinatorSeniorProfilePage: React.FC<CoordinatorSeniorProfilePage
             <button
               type="button"
               onClick={() => setShowEditProfileModal(true)}
-              className="min-h-[44px] px-3.5 py-2 bg-cream/15 hover:bg-cream/25 text-cream border border-cream/20 text-xs font-bold rounded-lg inline-flex items-center gap-1.5 transition-colors focus:outline-none focus:ring-2 focus:ring-cream"
+              className="min-h-[44px] px-2.5 sm:px-3.5 py-2 bg-cream/15 hover:bg-cream/25 text-cream border border-cream/20 text-xs font-bold rounded-lg inline-flex items-center gap-1.5 transition-colors focus:outline-none focus:ring-2 focus:ring-cream active:scale-95"
             >
               <Edit3 className="w-4 h-4" />
               <span>Edit Profile</span>
