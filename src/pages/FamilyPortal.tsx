@@ -1153,29 +1153,47 @@ export const FamilyPortal: React.FC = () => {
                               <span>Blood Pressure</span>
                               <Heart className="w-3.5 h-3.5 text-forest" />
                             </div>
-                            {bpSysReading && bpDiaReading ? (
-                              <>
-                                <div className="text-2xl font-black text-forest">
-                                  {bpSysReading.value}/{bpDiaReading.value}{' '}
-                                  <span className="text-xs font-normal text-ink-muted">mmHg</span>
-                                </div>
-                                <div className="text-[10px] text-ink-muted flex items-center justify-between">
-                                  <span>{formatISTDisplay(bpSysReading.measuredAt)}</span>
-                                  <span className="truncate max-w-[80px]">{bpSysReading.sourceLabel}</span>
-                                </div>
-                              </>
-                            ) : (
-                              <>
-                                <div className="text-2xl font-black text-forest">
-                                  124/78 <span className="text-xs font-normal text-ink-muted">mmHg</span>
-                                </div>
-                                <div className="text-[10px] text-ink-muted flex items-center justify-between">
-                                  <span>Today 08:30 AM</span>
-                                  <span>Manual entry</span>
-                                </div>
-                              </>
-                            )}
+                            {(() => {
+                              const manualBp = healthReadings.find((r) => r.type === 'bp');
+                              const sys = bpSysReading ? bpSysReading.value : manualBp ? manualBp.value : 124;
+                              const dia = bpDiaReading ? bpDiaReading.value : manualBp ? (manualBp.valueSecondary || 78) : 78;
+                              const timeStr = bpSysReading ? formatISTDisplay(bpSysReading.measuredAt) : manualBp ? formatISTDisplay(manualBp.timestamp) : 'Today 08:30 AM';
+                              const srcStr = bpSysReading ? bpSysReading.sourceLabel : 'Manual entry';
+                              return (
+                                <>
+                                  <div className="text-2xl font-black text-forest">
+                                    {sys}/{dia}{' '}
+                                    <span className="text-xs font-normal text-ink-muted">mmHg</span>
+                                  </div>
+                                  <div className="text-[10px] text-ink-muted flex items-center justify-between">
+                                    <span>{timeStr}</span>
+                                    <span className="truncate max-w-[80px]">{srcStr}</span>
+                                  </div>
+                                </>
+                              );
+                            })()}
                           </div>
+
+                          {/* Blood Sugar Tile */}
+                          {(() => {
+                            const manualSugar = healthReadings.find((r) => r.type === 'sugar');
+                            if (!manualSugar) return null;
+                            return (
+                              <div className="p-4 bg-white rounded-xl border border-border shadow-xs space-y-1.5">
+                                <div className="text-[11px] font-bold text-ink-muted flex items-center justify-between">
+                                  <span>Blood Sugar</span>
+                                  <Activity className="w-3.5 h-3.5 text-forest" />
+                                </div>
+                                <div className="text-2xl font-black text-forest">
+                                  {manualSugar.value} <span className="text-xs font-normal text-ink-muted">mg/dL</span>
+                                </div>
+                                <div className="text-[10px] text-ink-muted flex items-center justify-between">
+                                  <span>{formatISTDisplay(manualSugar.timestamp)}</span>
+                                  <span className="truncate max-w-[80px]">Manual entry</span>
+                                </div>
+                              </div>
+                            );
+                          })()}
 
                           {/* Weight Tile */}
                           <div className="p-4 bg-white rounded-xl border border-border shadow-xs space-y-1.5">

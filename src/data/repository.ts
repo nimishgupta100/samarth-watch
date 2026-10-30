@@ -19,6 +19,7 @@ import {
   AppNotificationRecord,
   MedicineChangeRequestRecord,
 } from './schema';
+import { supabaseSync } from '../lib/supabaseSync';
 
 const STORAGE_KEY = 'samarth_v2_state';
 const VERSION_KEY = 'samarth_data_version';
@@ -68,6 +69,8 @@ export interface ISamarthRepository {
 class LocalStorageRepository implements ISamarthRepository {
   private listeners: Set<() => void> = new Set();
   private stateCache: AppStateData | null = null;
+  private channel: BroadcastChannel | null = null;
+  private syncInterval: any = null;
 
   constructor() {
     this.ensureVersionAndSeed();
@@ -78,6 +81,95 @@ class LocalStorageRepository implements ISamarthRepository {
           this.notifyListeners();
         }
       });
+
+      // Instant 1ms multi-tab synchronization channel
+      try {
+        if (typeof BroadcastChannel !== 'undefined') {
+          this.channel = new BroadcastChannel('samarth_data_channel');
+          this.channel.onmessage = (msg) => {
+            if (msg.data?.type === 'STATE_CHANGED') {
+              this.stateCache = null;
+              this.notifyListeners();
+            }
+          };
+        }
+      } catch (e) {
+        console.warn('BroadcastChannel init error:', e);
+      }
+
+      // Background cloud sync polling (every 4 seconds) to pull updates from other devices
+      this.syncInterval = setInterval(() => {
+        this.pollCloudUpdates();
+      }, 4000);
+    }
+  }
+
+  private async pollCloudUpdates(): Promise<void> {
+    try {
+      const updates = await supabaseSync.pullRecentUpdates();
+      if (!updates) return;
+
+      const state = this.getState();
+      let changed = false;
+
+      // Merge remote readings
+      if (updates.readings && updates.readings.length > 0) {
+        for (const rem of updates.readings) {
+          if (!state.readings.some((r) => r.id === rem.id)) {
+            state.readings.unshift({
+              id: rem.id,
+              seniorId: rem.senior_id,
+              timestamp: rem.timestamp,
+              type: rem.type,
+              value: Number(rem.value),
+              valueSecondary: rem.value_secondary ? Number(rem.value_secondary) : undefined,
+              unit: rem.unit || '',
+              recordedBy: rem.recorded_by || 'senior',
+            });
+            changed = true;
+          }
+        }
+      }
+
+      // Merge remote notifications
+      if (updates.notifications && updates.notifications.length > 0) {
+        for (const rem of updates.notifications) {
+          if (!state.notifications.some((n) => n.id === rem.id)) {
+            state.notifications.unshift({
+              id: rem.id,
+              recipientUserId: rem.recipient_user_id,
+              targetRole: rem.target_role,
+              title: rem.title,
+              message: rem.message,
+              type: rem.type,
+              timestamp: rem.timestamp,
+              read: Boolean(rem.read),
+              actionUrl: rem.action_url || undefined,
+              actionLabel: rem.action_label || undefined,
+            });
+            changed = true;
+          }
+        }
+      }
+
+      // Merge remote dose updates
+      if (updates.doses && updates.doses.length > 0) {
+        for (const rem of updates.doses) {
+          const localDose = state.doses.find((d) => d.id === rem.id);
+          if (localDose && localDose.status !== rem.status) {
+            localDose.status = rem.status;
+            localDose.confirmedBy = rem.confirmed_by || localDose.confirmedBy;
+            localDose.confirmedTimestamp = rem.confirmed_timestamp || localDose.confirmedTimestamp;
+            changed = true;
+          }
+        }
+      }
+
+      if (changed) {
+        this.saveState(state);
+      }
+    } catch {
+      // offline / quiet
     }
   }
 
@@ -120,6 +212,32 @@ class LocalStorageRepository implements ISamarthRepository {
         return INITIAL_SEED_DATA;
       }
       this.stateCache = JSON.parse(raw) as AppStateData;
+
+      // Ensure Kamla has her baseline hypertension medication active if empty
+      if (this.stateCache.medicines.length === 0) {
+        const defaultMed: Medicine = {
+          id: 'med-kamla-001',
+          seniorId: 'senior-kamla-001',
+          name: 'Amlodipine 5mg',
+          instructions: 'Subah nashte ke baad 1 goli',
+          scheduledTimes: ['08:30 AM'],
+          createdAt: 1730000000000,
+        };
+        const defaultDose: DoseRecord = {
+          id: 'dose-kamla-today-001',
+          seniorId: 'senior-kamla-001',
+          medicineId: defaultMed.id,
+          medicineName: defaultMed.name,
+          dosageInstructions: defaultMed.instructions,
+          scheduledTime: '08:30 AM',
+          scheduledTimestamp: Date.now(),
+          status: 'pending',
+        };
+        this.stateCache.medicines.push(defaultMed);
+        this.stateCache.doses.push(defaultDose);
+        this.saveState(this.stateCache);
+      }
+
       return this.stateCache;
     } catch {
       return INITIAL_SEED_DATA;
@@ -133,6 +251,11 @@ class LocalStorageRepository implements ISamarthRepository {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       } catch (e) {
         console.warn('LocalStorage save error:', e);
+      }
+      try {
+        this.channel?.postMessage({ type: 'STATE_CHANGED', timestamp: Date.now() });
+      } catch {
+        // ignore
       }
     }
     this.notifyListeners();
@@ -302,6 +425,7 @@ class LocalStorageRepository implements ISamarthRepository {
     dose.confirmedBy = confirmedBy;
     dose.confirmedTimestamp = Date.now();
     this.saveState(state);
+    supabaseSync.pushDose(dose);
     return dose;
   }
 
@@ -329,6 +453,7 @@ class LocalStorageRepository implements ISamarthRepository {
     };
     state.checkins.unshift(newCheckIn);
     this.saveState(state);
+    supabaseSync.pushCheckIn(newCheckIn);
     return newCheckIn;
   }
 
@@ -366,6 +491,7 @@ class LocalStorageRepository implements ISamarthRepository {
     };
     state.readings.unshift(newReading);
     this.saveState(state);
+    supabaseSync.pushReading(newReading);
     return newReading;
   }
 
@@ -416,6 +542,7 @@ class LocalStorageRepository implements ISamarthRepository {
     };
     state.sosEvents.unshift(newSos);
     this.saveState(state);
+    supabaseSync.pushSos(newSos);
     return newSos;
   }
 
@@ -454,6 +581,7 @@ class LocalStorageRepository implements ISamarthRepository {
     };
     state.notifications.unshift(newNotif);
     this.saveState(state);
+    supabaseSync.pushNotification(newNotif);
     return newNotif;
   }
 

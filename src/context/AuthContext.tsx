@@ -150,9 +150,28 @@ function pureJsSha256(message: string): string {
 function loadSession(): User | null {
   if (typeof window === 'undefined') return null;
   try {
+    // 1. Check tab-isolated sessionStorage first (allows Senior and Coordinator in separate tabs)
     const raw = sessionStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as User;
+    if (raw) {
+      const user = JSON.parse(raw) as User;
+      if (user && user.role) return user;
+    }
+    // 2. If at /senior-home or general device visit, restore persistent senior login
+    const seniorRaw = localStorage.getItem('samarth_senior_persistent');
+    if (seniorRaw && (window.location.pathname.startsWith('/senior-home') || window.location.pathname === '/' || window.location.pathname === '/login')) {
+      const user = JSON.parse(seniorRaw) as User;
+      if (user && user.role) {
+        sessionStorage.setItem(SESSION_KEY, seniorRaw);
+        return user;
+      }
+    }
+    // 3. Fallback to general localStorage session
+    const localRaw = localStorage.getItem(SESSION_KEY);
+    if (localRaw) {
+      const user = JSON.parse(localRaw) as User;
+      if (user && user.role) return user;
+    }
+    return null;
   } catch {
     return null;
   }
@@ -160,12 +179,31 @@ function loadSession(): User | null {
 
 function saveSession(user: User): void {
   if (typeof window === 'undefined') return;
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
+  const str = JSON.stringify(user);
+  try {
+    // Tab-level session
+    sessionStorage.setItem(SESSION_KEY, str);
+    // If senior, remember permanently across device restarts
+    if (user.role === 'senior') {
+      localStorage.setItem('samarth_senior_persistent', str);
+    }
+    localStorage.setItem(SESSION_KEY, str);
+    localStorage.setItem('samarth_user_role', user.role);
+  } catch (e) {
+    console.warn('Failed to save session:', e);
+  }
 }
 
 function clearSession(): void {
   if (typeof window === 'undefined') return;
-  sessionStorage.removeItem(SESSION_KEY);
+  try {
+    sessionStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem('samarth_senior_persistent');
+    localStorage.removeItem('samarth_user_role');
+  } catch (e) {
+    console.warn('Failed to clear session:', e);
+  }
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

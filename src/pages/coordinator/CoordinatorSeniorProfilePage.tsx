@@ -45,7 +45,8 @@ import {
   BatteryCharging,
   Sliders,
   ShieldAlert,
-  MapPin
+  MapPin,
+  Radio
 } from 'lucide-react';
 import { SeniorLocationSection } from '../../components/common/SeniorLocationSection';
 import { useWearable } from '../../wearables/useWearable';
@@ -92,6 +93,8 @@ export const CoordinatorSeniorProfilePage: React.FC<CoordinatorSeniorProfilePage
     updateSeniorProfile,
     wearableConnected,
     activeSosEvent,
+    healthReadings,
+    todayCheckinAnswer,
   } = useApp();
 
   const cohortSenior = useMemo(() => {
@@ -214,6 +217,8 @@ export const CoordinatorSeniorProfilePage: React.FC<CoordinatorSeniorProfilePage
     qualityStats,
     connectWebBluetooth,
     disconnectDevice,
+    connectSimulator,
+    triggerScenario,
     isBluetoothSupported
   } = useWearable(senior?.id || 'senior-kamla-001');
 
@@ -662,6 +667,67 @@ export const CoordinatorSeniorProfilePage: React.FC<CoordinatorSeniorProfilePage
               <span className="text-xs font-semibold text-ink bg-mint-deep px-2.5 py-1 rounded-lg border border-border">
                 {senior.recommendedAction || 'Monitor next 24h'}
               </span>
+            </div>
+          </div>
+
+          {/* Live Senior Submissions & Daily Updates */}
+          <div className="bg-cream border border-border rounded-xl p-5 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-bold text-forest uppercase tracking-wider flex items-center gap-2">
+                <Activity className="w-4 h-4 text-forest" />
+                <span>Today's Live Submissions from {senior.name}</span>
+              </h4>
+              <span className="text-xs font-mono text-ink-muted">Live Sync Active</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Vitals tile */}
+              <div className="p-3 bg-white rounded-lg border border-border space-y-1">
+                <span className="text-[11px] font-bold text-ink-muted block uppercase">Latest Vital Reading</span>
+                {healthReadings.length > 0 ? (
+                  <div>
+                    <div className="text-base font-bold text-forest">
+                      {healthReadings[0].type.toUpperCase()}: {healthReadings[0].value}
+                      {healthReadings[0].valueSecondary ? `/${healthReadings[0].valueSecondary}` : ''} {healthReadings[0].unit}
+                    </div>
+                    <span className="text-[10px] text-ink-muted">
+                      {new Date(healthReadings[0].timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • Logged by {healthReadings[0].addedBy}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-xs text-ink-muted italic">No manual vitals logged today</span>
+                )}
+              </div>
+
+              {/* Checkin tile */}
+              <div className="p-3 bg-white rounded-lg border border-border space-y-1">
+                <span className="text-[11px] font-bold text-ink-muted block uppercase">Morning Check-In</span>
+                {todayCheckinAnswer ? (
+                  <div>
+                    <div className="text-base font-bold text-forest">
+                      Completed (Wellbeing: {todayCheckinAnswer.q1 || 1}/3)
+                    </div>
+                    <span className="text-[10px] text-ink-muted">
+                      Sleep: {todayCheckinAnswer.q3 || 1}/3 • Appetite: {todayCheckinAnswer.q4 || 1}/3
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-xs text-ink-muted italic">Check-in not completed yet</span>
+                )}
+              </div>
+
+              {/* Medicine confirmation tile */}
+              <div className="p-3 bg-white rounded-lg border border-border space-y-1">
+                <span className="text-[11px] font-bold text-ink-muted block uppercase">Medicine Status</span>
+                <div>
+                  <div className="text-base font-bold text-forest">
+                    {doses.filter(d => d.status === 'taken').length} of {doses.length} Taken
+                  </div>
+                  <span className="text-[10px] text-ink-muted">
+                    {doses.some(d => d.status === 'taken') ? 'Confirmed on time' : 'Pending morning dose'}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1131,6 +1197,93 @@ export const CoordinatorSeniorProfilePage: React.FC<CoordinatorSeniorProfilePage
                 >
                   {thresholdSaved ? 'Saved Successfully ✓' : 'Save Emergency Thresholds'}
                 </button>
+              </div>
+
+              {/* Band Simulation Scenario Controls (Live Demonstration Tools) */}
+              <div className="bg-cream border border-border rounded-xl p-4 space-y-3 shadow-xs">
+                <div className="flex items-center justify-between border-b border-border pb-2">
+                  <div className="flex items-center gap-2">
+                    <Radio className="w-4 h-4 text-forest" />
+                    <h4 className="text-xs font-bold text-ink uppercase tracking-wider">
+                      Band Live Scenarios (Demo Controls)
+                    </h4>
+                  </div>
+                  <span className="text-[10px] text-ink-muted">Simulate physiological events</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerScenario('normal');
+                      showToast('Band scenario set: Normal Day (72 bpm, 98% SpO2)', 'success');
+                    }}
+                    className="p-2 rounded-lg bg-white border border-border text-left hover:bg-emerald-50 transition-colors"
+                  >
+                    <div className="font-bold text-emerald-800">Normal Baseline</div>
+                    <div className="text-[10px] text-ink-muted">72 bpm • 98% SpO2</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerScenario('rising_resting_hr');
+                      showToast('Band scenario set: High Heart Rate (>130 bpm)', 'info');
+                    }}
+                    className="p-2 rounded-lg bg-white border border-border text-left hover:bg-amber-50 transition-colors"
+                  >
+                    <div className="font-bold text-amber-800">High Heart Rate</div>
+                    <div className="text-[10px] text-ink-muted">Spikes to 135 bpm</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerScenario('sustained_low_spo2');
+                      showToast('Band scenario set: Low Oxygen drop (<90%)', 'info');
+                    }}
+                    className="p-2 rounded-lg bg-white border border-border text-left hover:bg-amber-50 transition-colors"
+                  >
+                    <div className="font-bold text-amber-800">Low Oxygen (SpO2)</div>
+                    <div className="text-[10px] text-ink-muted">Drops below 90%</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerScenario('fall_detected');
+                      showToast('Band scenario: Fall Detected! Immediate alert dispatched', 'error');
+                    }}
+                    className="p-2 rounded-lg bg-white border border-border text-left hover:bg-red-50 transition-colors"
+                  >
+                    <div className="font-bold text-alert-red">Fall Detection 🚨</div>
+                    <div className="text-[10px] text-ink-muted">Impact + no movement</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerScenario('battery_low');
+                      showToast('Band scenario set: Low Battery (12%)', 'info');
+                    }}
+                    className="p-2 rounded-lg bg-white border border-border text-left hover:bg-zinc-100 transition-colors"
+                  >
+                    <div className="font-bold text-ink">Low Battery Warning</div>
+                    <div className="text-[10px] text-ink-muted">Battery drops to 12%</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerScenario('device_silent');
+                      showToast('Band scenario set: Device Silent (Gap detected after 5m)', 'info');
+                    }}
+                    className="p-2 rounded-lg bg-white border border-border text-left hover:bg-zinc-100 transition-colors"
+                  >
+                    <div className="font-bold text-ink-muted">Band Disconnected</div>
+                    <div className="text-[10px] text-ink-muted">Transmission paused</div>
+                  </button>
+                </div>
               </div>
             </div>
           </div>

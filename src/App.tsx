@@ -90,26 +90,33 @@ class ErrorBoundary extends Component<
  */
 function runBootHealthCheck(): void {
   try {
-    // 1. If sessionStorage has a session for a role that no longer exists or is malformed, purge it.
-    const rawSession = sessionStorage.getItem('samarth_auth_session');
+    // 1. If auth session has a role that no longer exists or is malformed, purge it.
+    const rawSession = localStorage.getItem('samarth_auth_session') || sessionStorage.getItem('samarth_auth_session');
     if (rawSession) {
       const parsed = JSON.parse(rawSession);
       const validRoles = ['coordinator', 'senior', 'family', 'manager'];
       if (!parsed?.role || !validRoles.includes(parsed.role)) {
         sessionStorage.removeItem('samarth_auth_session');
+        localStorage.removeItem('samarth_auth_session');
+        localStorage.removeItem('samarth_user_role');
+      } else {
+        // Keep both storages synchronized
+        sessionStorage.setItem('samarth_auth_session', rawSession);
+        localStorage.setItem('samarth_auth_session', rawSession);
+        localStorage.setItem('samarth_user_role', parsed.role);
       }
     }
 
-    // 2. If localStorage has samarth_user_role that doesn't match sessionStorage session, clear it
-    //    so AppContext always derives role from the auth session.
+    // 2. Keep role state synchronized
     const lsRole = localStorage.getItem('samarth_user_role');
     const sessionRole = rawSession ? (() => { try { return JSON.parse(rawSession)?.role; } catch { return null; } })() : null;
     if (lsRole && sessionRole && lsRole !== sessionRole) {
-      localStorage.removeItem('samarth_user_role');
+      localStorage.setItem('samarth_user_role', sessionRole);
     }
   } catch {
     // If anything fails, clean slate is safer than a crash.
     try { sessionStorage.removeItem('samarth_auth_session'); } catch { /* ignore */ }
+    try { localStorage.removeItem('samarth_auth_session'); } catch { /* ignore */ }
     try { localStorage.removeItem('samarth_user_role'); } catch { /* ignore */ }
   }
 }
@@ -119,11 +126,10 @@ runBootHealthCheck();
 
 /**
  * Root redirect: sends authenticated users to their home, unauthenticated to /login.
- * Session is stored in sessionStorage (see AuthContext SESSION_KEY).
+ * Session is stored in localStorage / sessionStorage (see AuthContext SESSION_KEY).
  */
 const RootRedirect: React.FC = () => {
-  // Try sessionStorage first (active session), then localStorage (never used, legacy guard)
-  const session = sessionStorage.getItem('samarth_auth_session');
+  const session = localStorage.getItem('samarth_auth_session') || sessionStorage.getItem('samarth_auth_session');
   if (!session) return <Navigate to="/login" replace />;
   try {
     const user = JSON.parse(session);

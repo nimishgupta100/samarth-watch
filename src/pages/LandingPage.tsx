@@ -165,6 +165,13 @@ export const LandingPage: React.FC = () => {
 
   usePageTitle(t.pageTitle, t.metaDesc);
 
+  // Auto-redirect senior citizen to their dedicated home if already logged in
+  useEffect(() => {
+    if (currentUser?.role === 'senior') {
+      navigate('/senior-home', { replace: true });
+    }
+  }, [currentUser, navigate]);
+
   // Mobile drawer state
   const [menuOpen, setMenuOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);

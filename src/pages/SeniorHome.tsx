@@ -108,7 +108,29 @@ export const SeniorHome: React.FC = () => {
 
   const { currentUser, logout } = useAuth();
   const { showToast } = useToast();
-  const { device: wearableDevice, connectSimulator, disconnectDevice } = useWearable(selectedSenior.id);
+  const {
+    device: wearableDevice,
+    readings: wearableReadings,
+    connectSimulator,
+    disconnectDevice,
+  } = useWearable(selectedSenior.id);
+
+  // Live vitals computed from band readings
+  const latestHeartRate = useMemo(() => {
+    const hr = wearableReadings?.find((r) => r.metric === 'heart_rate');
+    return hr ? Math.round(hr.value) : 74;
+  }, [wearableReadings]);
+
+  const latestSpo2 = useMemo(() => {
+    const ox = wearableReadings?.find((r) => r.metric === 'spo2');
+    return ox ? Math.round(ox.value) : 98;
+  }, [wearableReadings]);
+
+  const latestSteps = useMemo(() => {
+    const stepReadings = wearableReadings?.filter((r) => r.metric === 'steps') || [];
+    const extra = stepReadings.reduce((sum, r) => sum + (r.value || 0), 0);
+    return 3420 + extra;
+  }, [wearableReadings]);
 
   // Screen navigation state
   const [screen, setScreen] = useState<SeniorScreen>(
@@ -665,10 +687,24 @@ export const SeniorHome: React.FC = () => {
                       ? t.bandBatteryLow
                       : t.bandConnected}
                   </div>
-                  <div className="text-[18px] text-[#4A6B5D] font-medium">
-                    {wearableDevice?.status === 'connected'
-                      ? `Battery ${wearableDevice.batteryPercent || 88}% • Updated just now`
-                      : 'Tap to open band settings'}
+                  <div className="text-[18px] text-[#4A6B5D] font-medium flex flex-wrap items-center gap-2">
+                    {wearableDevice?.status === 'connected' ? (
+                      <>
+                        <span className="inline-flex items-center gap-1 font-bold text-[#1C3F32]">
+                          <Heart className="w-4 h-4 text-[#C93B2B] fill-[#C93B2B]" />
+                          {latestHeartRate} bpm
+                        </span>
+                        <span>•</span>
+                        <span className="inline-flex items-center gap-1 font-bold text-[#1C3F32]">
+                          <Activity className="w-4 h-4 text-[#2E6B56]" />
+                          {latestSpo2}% SpO2
+                        </span>
+                        <span>•</span>
+                        <span>Battery {wearableDevice.batteryPercent || 88}%</span>
+                      </>
+                    ) : (
+                      'Tap to open band settings'
+                    )}
                   </div>
                 </div>
               </div>
@@ -997,8 +1033,13 @@ export const SeniorHome: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
-                  logout();
-                  window.location.href = '/login';
+                  const confirmMsg = language === 'hi'
+                    ? 'क्या आप वाकई साइन आउट करना चाहते हैं?'
+                    : 'Are you sure you want to sign out?';
+                  if (window.confirm(confirmMsg)) {
+                    logout();
+                    window.location.href = '/login';
+                  }
                 }}
                 className={`w-full min-h-[72px] p-4 rounded-2xl ${cardBg} text-left flex items-center justify-between gap-3`}
               >
@@ -1028,41 +1069,150 @@ export const SeniorHome: React.FC = () => {
               <span>{t.back}</span>
             </button>
 
-            <div className={`p-6 rounded-2xl ${cardBg} space-y-5`}>
-              <h2 className={headingClass}>{t.bandSettingsTitle}</h2>
+            <div className={`p-6 sm:p-8 rounded-2xl ${cardBg} space-y-6`}>
+              <div className="flex items-center justify-between gap-3">
+                <h2 className={headingClass}>{t.bandSettingsTitle}</h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const statusText = wearableDevice?.status === 'connected'
+                      ? (language === 'hi'
+                          ? `आपका हेल्थ बैंड जुड़ा हुआ है। हृदय गति ${latestHeartRate} बीपीएम है, ऑक्सीजन ${latestSpo2} प्रतिशत है, और आज आपने ${latestSteps} कदम चले हैं।`
+                          : `Your health band is connected. Your heart rate is ${latestHeartRate} bpm, oxygen level is ${latestSpo2} percent, and you have taken ${latestSteps} steps today.`)
+                      : (language === 'hi'
+                          ? 'हेल्थ बैंड जुड़ा नहीं है। कृपया बैंड जोड़ें।'
+                          : 'Health band is not connected. Please connect your band.');
+                    handleReadAloud(statusText);
+                  }}
+                  className="min-h-[64px] min-w-[64px] rounded-xl bg-[#F4F8F5] border border-[#CBDCD2] text-[#132A22] flex items-center justify-center shrink-0"
+                  aria-label="Listen to band details"
+                >
+                  <Volume2 className="w-6 h-6" />
+                </button>
+              </div>
 
               {/* Status display */}
-              <div className="p-5 rounded-2xl bg-[#F4F8F5] border border-[#CBDCD2] space-y-2">
-                <div className="text-[24px] font-bold">
-                  {!wearableDevice || wearableDevice.status === 'disconnected'
-                    ? t.bandNotConnected
-                    : wearableDevice.status === 'reconnecting'
-                    ? t.bandReconnecting
-                    : t.bandConnected}
+              <div className="p-5 rounded-2xl bg-[#F4F8F5] border border-[#CBDCD2] space-y-3">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="text-[24px] font-bold flex items-center gap-2">
+                    <span className={`w-3.5 h-3.5 rounded-full ${wearableDevice?.status === 'connected' ? 'bg-[#2E6B56] animate-pulse' : 'bg-[#C93B2B]'}`} />
+                    {!wearableDevice || wearableDevice.status === 'disconnected'
+                      ? t.bandNotConnected
+                      : wearableDevice.status === 'reconnecting'
+                      ? t.bandReconnecting
+                      : t.bandConnected}
+                  </div>
+                  <span className="text-[18px] font-bold text-[#1C3F32] bg-white px-3 py-1.5 rounded-xl border border-[#CBDCD2] flex items-center gap-1.5">
+                    <BatteryCharging className="w-5 h-5 text-[#2E6B56]" />
+                    {wearableDevice?.batteryPercent ? `${wearableDevice.batteryPercent}%` : '88%'}
+                  </span>
                 </div>
                 <div className="text-[18px] text-[#4A6B5D]">
-                  Device: {wearableDevice?.vendorModelName || 'Samarth Health Band'}
-                </div>
-                <div className="text-[18px] text-[#4A6B5D]">
-                  Battery: {wearableDevice?.batteryPercent ? `${wearableDevice.batteryPercent}%` : '88%'}
+                  Device: {wearableDevice?.vendorModelName || 'Samarth Smart Health Band'}
                 </div>
                 <div className="text-[16px] text-[#4A6B5D]">
                   {t.simulatedDevice}
                 </div>
               </div>
 
-              {/* Connect / Reconnect Button (>= 72px tall) */}
-              <button
-                type="button"
-                onClick={() => {
-                  setBandConnectStep(1);
-                  setScreen('band_connect_flow');
-                }}
-                className="w-full min-h-[72px] px-6 py-4 rounded-2xl bg-[#1C3F32] hover:bg-[#132A22] text-white font-bold text-[24px] flex items-center justify-center gap-3"
-              >
-                <Watch className="w-7 h-7" />
-                <span>{!wearableDevice || wearableDevice.status === 'disconnected' ? t.connectMyBand : 'Reconnect Band'}</span>
-              </button>
+              {/* Live Vitals Grid from Band */}
+              {wearableDevice?.status === 'connected' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Heart Rate Tile */}
+                  <div className="p-5 rounded-2xl bg-white border-2 border-[#CBDCD2] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[18px] font-bold text-[#4A6B5D] uppercase tracking-wide">
+                        {language === 'hi' ? 'हृदय गति' : 'Heart Rate'}
+                      </span>
+                      <Heart className="w-6 h-6 text-[#C93B2B] fill-[#C93B2B] animate-pulse" />
+                    </div>
+                    <div className="text-[36px] font-black text-[#132A22]">
+                      {latestHeartRate} <span className="text-[20px] font-semibold text-[#4A6B5D]">bpm</span>
+                    </div>
+                    <div className="text-[16px] text-[#2E6B56] font-semibold">
+                      {latestHeartRate > 100
+                        ? (language === 'hi' ? 'हृदय गति थोड़ी तेज है' : 'Heart rate is elevated')
+                        : (language === 'hi' ? 'हृदय गति सामान्य है' : 'Normal resting pulse')}
+                    </div>
+                  </div>
+
+                  {/* Blood Oxygen SpO2 Tile */}
+                  <div className="p-5 rounded-2xl bg-white border-2 border-[#CBDCD2] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[18px] font-bold text-[#4A6B5D] uppercase tracking-wide">
+                        {language === 'hi' ? 'ऑक्सीजन (SpO2)' : 'Blood Oxygen'}
+                      </span>
+                      <Activity className="w-6 h-6 text-[#2E6B56]" />
+                    </div>
+                    <div className="text-[36px] font-black text-[#132A22]">
+                      {latestSpo2}<span className="text-[22px] font-semibold text-[#4A6B5D]">%</span>
+                    </div>
+                    <div className="text-[16px] text-[#2E6B56] font-semibold">
+                      {latestSpo2 < 92
+                        ? (language === 'hi' ? 'ऑक्सीजन कम है' : 'Oxygen is low')
+                        : (language === 'hi' ? 'स्वस्थ ऑक्सीजन स्तर' : 'Healthy oxygen level')}
+                    </div>
+                  </div>
+
+                  {/* Daily Steps Tracker Tile */}
+                  <div className="p-5 rounded-2xl bg-white border-2 border-[#CBDCD2] space-y-2 sm:col-span-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[18px] font-bold text-[#4A6B5D] uppercase tracking-wide">
+                        {language === 'hi' ? 'आज के कदम' : 'Today’s Steps'}
+                      </span>
+                      <span className="text-[18px] font-bold text-[#1C3F32]">
+                        {Math.min(100, Math.round((latestSteps / 5000) * 100))}% {language === 'hi' ? 'लक्ष्य' : 'of goal'}
+                      </span>
+                    </div>
+                    <div className="text-[36px] font-black text-[#132A22]">
+                      {latestSteps.toLocaleString()} <span className="text-[20px] font-semibold text-[#4A6B5D]">{language === 'hi' ? 'कदम' : 'steps'}</span>
+                    </div>
+                    <div className="w-full bg-[#EBF3EE] rounded-full h-3">
+                      <div
+                        className="bg-[#2E6B56] h-3 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(100, Math.round((latestSteps / 5000) * 100))}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons: Sync Now / Connect / Disconnect */}
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await connectSimulator();
+                    showToast(
+                      language === 'hi'
+                        ? `बैंड सिंक हुआ: पल्स ${latestHeartRate} bpm, ऑक्सीजन ${latestSpo2}%`
+                        : `Band synced: Pulse ${latestHeartRate} bpm, SpO2 ${latestSpo2}%`,
+                      'success'
+                    );
+                  }}
+                  className="w-full min-h-[72px] px-6 py-4 rounded-2xl bg-[#1C3F32] hover:bg-[#132A22] text-white font-bold text-[24px] flex items-center justify-center gap-3"
+                >
+                  <Watch className="w-7 h-7" />
+                  <span>
+                    {!wearableDevice || wearableDevice.status === 'disconnected'
+                      ? t.connectMyBand
+                      : (language === 'hi' ? 'ताजा पल्स पढ़ें / सिंक करें' : 'Sync & Check Pulse Now')}
+                  </span>
+                </button>
+
+                {wearableDevice && wearableDevice.status === 'connected' && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await disconnectDevice();
+                      showToast(language === 'hi' ? 'बैंड डिस्कनेक्ट हुआ' : 'Band disconnected', 'info');
+                    }}
+                    className="w-full min-h-[64px] px-6 py-3 rounded-2xl bg-white border-2 border-[#CBDCD2] text-[#C93B2B] hover:bg-red-50 font-bold text-[20px] flex items-center justify-center gap-2"
+                  >
+                    <span>{language === 'hi' ? 'बैंड डिस्कनेक्ट करें' : 'Disconnect Band'}</span>
+                  </button>
+                )}
+              </div>
 
               {/* Keep Screen On Toggle */}
               <div className="p-4 rounded-2xl border border-[#CBDCD2] flex items-center justify-between gap-3">

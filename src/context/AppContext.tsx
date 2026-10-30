@@ -22,11 +22,12 @@ import { callService, CallResult } from '../utils/callService';
 import { voiceNoteSummarizer } from '../utils/voiceNoteSummarizer';
 import { demoWearableSimulator, WearableReading, WearableScenario } from '../utils/wearableProvider';
 import { getCurrentLocation, getLastKnownOrHome } from '../utils/locationService';
+import { useAuth } from './AuthContext';
 
-/** Reads the current user's role from the auth session (sessionStorage). */
+/** Reads the current user's role from the auth session (localStorage / sessionStorage). */
 function getRoleFromSession(): UserRole | 'senior' {
   try {
-    const raw = sessionStorage.getItem('samarth_auth_session');
+    const raw = localStorage.getItem('samarth_auth_session') || sessionStorage.getItem('samarth_auth_session');
     if (raw) {
       const u = JSON.parse(raw);
       if (u && u.role) return u.role as UserRole | 'senior';
@@ -174,6 +175,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Sync version tracking
   const [repoRevision, setRepoRevision] = useState(0);
+  const { currentUser } = useAuth();
 
   useEffect(() => {
     return repository.subscribe(() => {
@@ -182,8 +184,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   // 1. Roles & Active Senior
-  // Always derive role from the auth session first so coordinator/senior/family land correctly.
   const [role, setRoleState] = useState<UserRole | 'senior'>(() => getRoleFromSession());
+  const activeRole: UserRole | 'senior' = currentUser?.role || role;
 
   const [currentSeniorId, setCurrentSeniorIdState] = useState<string>(() => {
     const saved = localStorage.getItem('samarth_focus_senior_id');
@@ -508,12 +510,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Filter role notifications for active role/session
   const roleNotifications = useMemo(() => {
     return notifications.filter((n) => {
-      if (role === 'senior') return n.targetRole === 'senior' || n.targetRole === 'all';
-      if (role === 'family') return n.targetRole === 'family' || n.targetRole === 'all';
-      if (role === 'coordinator') return n.targetRole === 'coordinator' || n.targetRole === 'all';
+      if (activeRole === 'senior') return n.targetRole === 'senior' || n.targetRole === 'all';
+      if (activeRole === 'family') return n.targetRole === 'family' || n.targetRole === 'all';
+      if (activeRole === 'coordinator') return n.targetRole === 'coordinator' || n.targetRole === 'all';
+      if (activeRole === 'manager') return n.targetRole === 'coordinator' || n.targetRole === 'all';
       return false;
     });
-  }, [notifications, role]);
+  }, [notifications, activeRole]);
 
   const unreadNotificationCount = useMemo(() => {
     return roleNotifications.filter((n) => !n.read).length;
@@ -670,7 +673,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Medicine Actions
   const takeDoseSenior = (doseId: string) => {
-    repository.markDoseTaken(doseId, 'senior');
+    const updated = repository.markDoseTaken(doseId, 'senior');
+    const medName = updated?.medicineName || 'Medicine';
+
+    // 1. Notify Care Coordinator
+    repository.addNotification({
+      recipientUserId: selectedSenior.assignedCoordinatorId,
+      targetRole: 'coordinator',
+      title: `Medicine Confirmed: ${selectedSenior.name}`,
+      message: `${selectedSenior.name} has confirmed taking ${medName} on time.`,
+      type: 'medicine_escalation',
+      actionUrl: `/coordinator/senior/${selectedSenior.id}`,
+      actionLabel: 'View record',
+    });
+
+    // 2. Notify Family
+    if (selectedSenior.familyConsentGranted) {
+      repository.addNotification({
+        recipientUserId: 'user-family-karishma',
+        targetRole: 'family',
+        title: `Medicine Dose Taken: ${selectedSenior.name}`,
+        message: `${selectedSenior.name} has taken ${medName} on time.`,
+        type: 'medicine_escalation',
+        actionUrl: '/family',
+        actionLabel: 'View medicines',
+      });
+    }
   };
 
   const snoozeDoseSenior = (doseId: string) => {
@@ -850,6 +878,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       actionLabel: 'Confirm visit',
     });
 
+    // Notify family
+    if (selectedSenior.familyConsentGranted) {
+      repository.addNotification({
+        recipientUserId: 'user-family-karishma',
+        targetRole: 'family',
+        title: `Care Visit Requested: ${selectedSenior.name}`,
+        message: `${requestedBy === 'senior' ? selectedSenior.name : 'A family member'} requested a ${type} appointment for ${date} (${slot}).`,
+        type: 'appointment',
+        actionUrl: '/family',
+        actionLabel: 'View calendar',
+      });
+    }
+
     return {
       id: record.id,
       seniorId: record.seniorId,
@@ -902,14 +943,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       weight: 'kg',
       pulse: 'bpm',
     };
+    const unit = units[type] || '';
+    const displayVal = valueSecondary ? `${value}/${valueSecondary} ${unit}` : `${value} ${unit}`;
+    const typeLabel = type === 'bp' ? 'Blood Pressure' : type === 'sugar' ? 'Blood Sugar' : type.toUpperCase();
+
     repository.addReading({
       seniorId: selectedSenior.id,
       type,
       value,
       valueSecondary,
-      unit: units[type] || '',
+      unit,
       recordedBy: addedBy,
     });
+
+    // 1. Notify Care Coordinator
+    repository.addNotification({
+      recipientUserId: selectedSenior.assignedCoordinatorId,
+      targetRole: 'coordinator',
+      title: `New Health Reading: ${selectedSenior.name}`,
+      message: `${selectedSenior.name} recorded ${typeLabel}: ${displayVal}.`,
+      type: 'reading',
+      actionUrl: `/coordinator/senior/${selectedSenior.id}`,
+      actionLabel: 'View vitals',
+    });
+
+    // 2. Notify Family if consent granted
+    if (selectedSenior.familyConsentGranted) {
+      repository.addNotification({
+        recipientUserId: 'user-family-karishma',
+        targetRole: 'family',
+        title: `Health Reading: ${selectedSenior.name}`,
+        message: `${selectedSenior.name} logged a new ${typeLabel} reading (${displayVal}).`,
+        type: 'reading',
+        actionUrl: '/family',
+        actionLabel: 'View health',
+      });
+    }
   };
 
   // Voice Notes
@@ -963,6 +1032,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       answers,
       recordedBy: 'senior',
     });
+
+    const wellbeingSummary = answers.q1 === 1 ? 'Feeling great' : answers.q1 === 2 ? 'Feeling okay' : 'Needs attention';
+
+    // 1. Notify Care Coordinator
+    repository.addNotification({
+      recipientUserId: selectedSenior.assignedCoordinatorId,
+      targetRole: 'coordinator',
+      title: `Daily Check-in Completed: ${selectedSenior.name}`,
+      message: `${selectedSenior.name} completed daily wellbeing questionnaire: ${wellbeingSummary} (Overall: ${answers.q1}/3, Sleep: ${answers.q3}/3, Appetite: ${answers.q4}/3).`,
+      type: 'info',
+      actionUrl: `/coordinator/senior/${selectedSenior.id}`,
+      actionLabel: 'Review check-in',
+    });
+
+    // 2. Notify Family if consent granted
+    if (selectedSenior.familyConsentGranted) {
+      repository.addNotification({
+        recipientUserId: 'user-family-karishma',
+        targetRole: 'family',
+        title: `Daily Check-in: ${selectedSenior.name}`,
+        message: `${selectedSenior.name} completed today's morning check-in (${wellbeingSummary}).`,
+        type: 'info',
+        actionUrl: '/family',
+        actionLabel: 'View update',
+      });
+    }
   };
 
   // Notification Management
@@ -972,9 +1067,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const clearNotificationsForRole = () => {
     const recipientId =
-      role === 'coordinator'
+      activeRole === 'coordinator' || activeRole === 'manager'
         ? selectedSenior.assignedCoordinatorId
-        : role === 'family'
+        : activeRole === 'family'
         ? 'user-family-karishma'
         : 'user-senior-kamla';
     repository.clearNotifications(recipientId);
