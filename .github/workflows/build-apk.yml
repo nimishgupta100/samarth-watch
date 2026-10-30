@@ -15,70 +15,83 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ── 2. Node 20 with npm cache ────────────────────────────────────────────
+      # ── 2. Node 20 ───────────────────────────────────────────────────────────
       - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      # ── 3. JDK 17 (Temurin) — required by Android Gradle Plugin 8.x ────────
+      # ── 3. JDK 17 (required by Android Gradle Plugin 8.x) ───────────────────
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # ── 4. Android SDK ───────────────────────────────────────────────────────
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      # ── 4. Use the Android SDK already on ubuntu-latest ─────────────────────
+      - name: Configure Android SDK environment
+        run: |
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
+          echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
 
-      # ── 5. Install web dependencies ──────────────────────────────────────────
-      - name: Install dependencies
+      # ── 5. Accept SDK licenses (needed for Gradle) ──────────────────────────
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+
+      # ── 6. Install required SDK components ──────────────────────────────────
+      - name: Install SDK platform and build-tools
+        run: |
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+      # ── 7. Install web dependencies ──────────────────────────────────────────
+      - name: Install npm dependencies
         run: npm ci
 
-      # ── 6. Build the Vite web app ────────────────────────────────────────────
-      - name: Build web app
+      # ── 8. Build the Vite web app ────────────────────────────────────────────
+      - name: Build web app (Vite)
         run: npm run build
 
-      # ── 7. Add Capacitor packages ────────────────────────────────────────────
-      - name: Install Capacitor packages
-        run: npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/splash-screen
+      # ── 9. Install Capacitor packages ────────────────────────────────────────
+      - name: Install Capacitor
+        run: npm install @capacitor/core @capacitor/cli @capacitor/android
 
-      # ── 8. Add Android platform (idempotent — skips if android/ already exists)
+      # ── 10. Add Android platform ─────────────────────────────────────────────
       - name: Add Android platform
-        run: npx cap add android || true
+        run: npx cap add android
 
-      # ── 9. Sync web assets into Android project ──────────────────────────────
-      - name: Sync Capacitor
+      # ── 11. Sync web assets into Android project ─────────────────────────────
+      - name: Sync Capacitor assets
         run: npx cap sync android
 
-      # ── 10. Patch AndroidManifest.xml permissions ────────────────────────────
-      - name: Patch AndroidManifest permissions
+      # ── 12. Patch AndroidManifest.xml permissions ────────────────────────────
+      - name: Add Android permissions to manifest
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
-          # Insert permissions before <application tag
           sed -i 's|<application|<uses-permission android:name="android.permission.VIBRATE"/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation"/>\n    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>\n    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <uses-permission android:name="android.permission.WAKE_LOCK"/>\n    <application|' "$MANIFEST"
-          echo "AndroidManifest patched"
+          echo "Manifest permissions added"
+          grep "VIBRATE\|BLUETOOTH\|LOCATION" "$MANIFEST"
 
-      # ── 11. Gradle build ─────────────────────────────────────────────────────
+      # ── 13. Gradle build ─────────────────────────────────────────────────────
       - name: Build debug APK
         working-directory: android
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
 
-      # ── 12. Rename APK ───────────────────────────────────────────────────────
-      - name: Rename APK
+      # ── 14. Collect APK ──────────────────────────────────────────────────────
+      - name: Collect and checksum APK
         run: |
           mkdir -p release-apk
           cp android/app/build/outputs/apk/debug/app-debug.apk \
              release-apk/SamarthWatch-1.0.0-debug.apk
           sha256sum release-apk/SamarthWatch-1.0.0-debug.apk > release-apk/checksums.txt
-          echo "APK info:"
           ls -lh release-apk/
 
-      # ── 13. Upload artifact ──────────────────────────────────────────────────
+      # ── 15. Upload artifact ──────────────────────────────────────────────────
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
