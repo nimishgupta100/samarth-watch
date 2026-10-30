@@ -460,7 +460,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // 9. Voice Notes (starts EMPTY)
   const voiceNotes: SeniorVoiceNote[] = useMemo(() => {
-    return repository.getVoiceNotes(selectedSenior.id).map((v) => ({
+    const list =
+      activeRole === 'coordinator'
+        ? repository.getVoiceNotes()
+        : repository.getVoiceNotes(selectedSenior.id);
+    return list.map((v) => ({
       id: v.id,
       seniorId: v.seniorId,
       timestamp: v.timestamp,
@@ -472,7 +476,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       coordinatorId: v.coordinatorId,
       isHighPriority: v.isHighPriority,
     }));
-  }, [selectedSenior.id, repoRevision]);
+  }, [selectedSenior.id, activeRole, repoRevision]);
 
   // 10. Check-ins
   const todayCheckinAnswer = useMemo(() => {
@@ -1055,6 +1059,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       senderName: selectedSenior.name,
       text: `🎤 Voice Note: "${result.transcript}"\n(${result.plainSummary})`,
     });
+
+    // Update senior signals and action on coordinator caseload
+    try {
+      repository.updateSenior(selectedSenior.id, {
+        activeSignals: Array.from(new Set([...(selectedSenior.activeSignals || []), 'call_notes'])) as any,
+        recommendedAction: `🎙️ Voice Note: "${result.transcript.slice(0, 36)}..."`,
+      });
+    } catch {
+      // quiet
+    }
   };
 
   const saveCheckinAnswers = (answers: { q1: number; q2: number; q3: number; q4: number }) => {

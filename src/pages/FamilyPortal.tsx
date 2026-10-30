@@ -506,6 +506,14 @@ export const FamilyPortal: React.FC = () => {
                     }}
                   />
                   <FamilyQuickActionTile
+                    label="Call Coordinator"
+                    icon={<UserCheck className="w-5 h-5" />}
+                    onClick={() => {
+                      if (coordinatorProfile?.phone) window.location.href = `tel:${coordinatorProfile.phone}`;
+                      else showToast('Coordinator phone not set', 'info');
+                    }}
+                  />
+                  <FamilyQuickActionTile
                     label="Get Report"
                     icon={<FileText className="w-5 h-5" />}
                     onClick={() => setActiveTab('report')}

@@ -51,6 +51,7 @@ export interface SeniorRecord {
   activeSignals: string[];
   topReasons: string[];
   primaryContext: string;
+  recommendedAction?: string;
   createdAt: number;
 }
 

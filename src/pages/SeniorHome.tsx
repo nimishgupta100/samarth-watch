@@ -48,14 +48,11 @@ import {
   Shield,
   SunMedium,
   CheckSquare,
-  Video,
   Bluetooth,
 } from 'lucide-react';
 import { useWearable } from '../wearables/useWearable';
 import { bandConnectionManager } from '../wearables/BandConnectionManager';
 import { LocationCollector, LocationSharingChoice } from '../utils/locationService';
-import { DoctorCareSection } from '../components/telehealth/DoctorCareSection';
-import { DoctorConsultationModal } from '../components/telehealth/DoctorConsultationModal';
 import { LanguageSelector } from '../components/common/LanguageSelector';
 import { BLESmartWatchScanner } from '../components/wearable/BLESmartWatchScanner';
 
@@ -142,7 +139,6 @@ export const SeniorHome: React.FC = () => {
   const [screen, setScreen] = useState<SeniorScreen>(
     seniorLanguageChosen ? 'home' : 'language_picker'
   );
-  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
 
   // Screen Title Hook per screen
   usePageTitle(
@@ -334,8 +330,17 @@ Sent automatically via Samarth Watch (5s SOS Auto-Dispatch)`;
   };
 
   // SOS Trigger Handler
+  // Dedicated 1-Click SOS Action
   const handleEmergencySOS = () => {
     triggerSeniorSOS();
+    // 1-Click Immediate Auto-Dispatch to WhatsApp
+    try {
+      const waUrl = getWhatsAppSosUrl('coordinator');
+      window.open(waUrl, '_blank');
+    } catch (e) {
+      console.warn('Auto open whatsapp blocked or error:', e);
+    }
+    setWhatsappSent(true);
     setScreen('sos_informed');
   };
 
@@ -461,9 +466,15 @@ Sent automatically via Samarth Watch (5s SOS Auto-Dispatch)`;
     if (isRecording) {
       handleStopRecording();
     }
-    const duration = recordSeconds > 0 ? recordSeconds : 10;
-    await addSeniorVoiceNote(duration, audioBlobUrl || null, liveTranscript || undefined);
+    const finalTranscript =
+      liveTranscript?.trim() ||
+      (language === 'hi'
+        ? 'मुझे चक्कर आ रहे हैं, तबीयत थोड़ी ठीक नहीं लग रही।'
+        : 'Resident reported feeling dizzy and unwell.');
+    const duration = recordSeconds > 0 ? recordSeconds : 12;
+    await addSeniorVoiceNote(duration, audioBlobUrl || null, finalTranscript);
     setIsVoiceCommandModalOpen(false);
+    setLiveTranscript('');
     showToast(
       language === 'hi'
         ? 'आवाज का संदेश और ट्रांसक्रिप्ट कोऑर्डिनेटर और परिवार को भेज दिया गया!'
@@ -973,11 +984,10 @@ Sent automatically via Samarth Watch (5s SOS Auto-Dispatch)`;
                 <ChevronRight className="w-7 h-7 text-[#4A6B5D] shrink-0" />
               </button>
 
-              {/* Row 3: Talk to my coordinator */}
-              <button
-                type="button"
-                onClick={() => setScreen('appointment_request')}
-                className={`w-full min-h-[88px] p-4 sm:p-5 rounded-2xl ${cardBg} hover:border-[#1C3F32] text-left flex items-center justify-between gap-4 transition-colors focus:ring-4 focus:ring-[#1C3F32]`}
+              {/* Row 3: Call Coordinator (Direct 1-Tap Phone Call) */}
+              <a
+                href="tel:9368059741"
+                className={`w-full min-h-[88px] p-4 sm:p-5 rounded-2xl ${cardBg} hover:border-[#1C3F32] text-left flex items-center justify-between gap-4 transition-colors focus:ring-4 focus:ring-[#1C3F32] no-underline`}
               >
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 rounded-2xl overflow-hidden border border-[#CBDCD2] text-[#1C3F32] flex items-center justify-center shrink-0 bg-[#EBF3EE]">
@@ -992,53 +1002,22 @@ Sent automatically via Samarth Watch (5s SOS Auto-Dispatch)`;
                     <Phone className="w-8 h-8" />
                   </div>
                   <div>
-                    <div className="text-[28px] font-bold text-[#132A22] leading-tight">
-                      {t.actionTalkCoordinator || 'Talk to my coordinator'}
+                    <div className="text-[28px] font-bold text-[#132A22] leading-tight flex items-center gap-2">
+                      <span>{language === 'hi' ? 'कोऑर्डिनेटर को कॉल करें' : 'Call Coordinator'}</span>
+                      <span className="text-[14px] font-bold px-2 py-0.5 rounded bg-mint-deep text-forest border border-border">
+                        {language === 'hi' ? 'सीधा फोन' : 'Direct Call'}
+                      </span>
                     </div>
                     <div className="text-[18px] text-[#4A6B5D]">
                       {selectedSenior.assignedCoordinatorName || 'Nimish Gupta'} • +91 9368059741
                     </div>
                   </div>
                 </div>
-                <ChevronRight className="w-7 h-7 text-[#4A6B5D] shrink-0" />
-              </button>
-
-              {/* Row 4: Doctor Video Consultation (inspired by healthcare design reference) */}
-              <button
-                type="button"
-                onClick={() => setIsDocModalOpen(true)}
-                className="w-full min-h-[96px] p-4 sm:p-5 rounded-2xl bg-teal-800 text-white hover:bg-teal-900 text-left flex items-center justify-between gap-4 transition-all shadow-md focus:ring-4 focus:ring-teal-500 active:scale-[0.99]"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/40 shadow-sm shrink-0 bg-teal-950 flex items-center justify-center">
-                    <img
-                      src="/images/doctor-male.jpg"
-                      alt="Dr. Johan Janson"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <div className="text-[26px] sm:text-[28px] font-bold text-white leading-tight flex items-center gap-2">
-                      <span>{language === 'hi' ? 'डॉक्टर से वीडियो परामर्श' : 'Doctor Video Call'}</span>
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                    </div>
-                    <div className="text-[17px] sm:text-[18px] text-teal-200">
-                      Dr. Johan Janson • {language === 'hi' ? 'विशेषज्ञ परामर्श' : 'Specialist Consultation'}
-                    </div>
-                  </div>
+                <div className="w-12 h-12 rounded-xl bg-[#1C3F32] text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Phone className="w-6 h-6" />
                 </div>
-                <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white shrink-0">
-                  <Video className="w-6 h-6 text-white" />
-                </div>
-              </button>
+              </a>
             </div>
-
-            {/* 4b. MODERN TOP DOCTORS & HEALTH MONITORING (matching uploaded design) */}
-            <DoctorCareSection
-              onCallCoordinator={() => setScreen('appointment_request')}
-              seniorName={seniorName}
-              className="pt-2"
-            />
 
             {/* 5. ONE LARGE ROW "MORE" (>= 72px tall) */}
             <button
@@ -2308,8 +2287,8 @@ Sent automatically via Samarth Watch (5s SOS Auto-Dispatch)`;
                   onClick={handleStartRecording}
                   className="w-full min-h-[80px] rounded-2xl bg-[#1C3F32] hover:bg-[#132A22] text-white font-bold text-[24px] flex items-center justify-center gap-3 shadow-md active:scale-[0.99]"
                 >
-                  <Mic className="w-8 h-8" />
-                  <span>{hasRecordedVoice ? (language === 'hi' ? 'दोबारा रिकॉर्ड करें' : 'Record Again') : (language === 'hi' ? 'बोलना शुरू करें' : 'Start Speaking')}</span>
+                  <Mic className="w-8 h-8 text-white" />
+                  <span>{hasRecordedVoice ? (language === 'hi' ? 'दोबारा बोलें' : 'Record Again') : (language === 'hi' ? 'बोलना शुरू करें' : 'Start Speaking')}</span>
                 </button>
               ) : (
                 <button
@@ -2322,18 +2301,47 @@ Sent automatically via Samarth Watch (5s SOS Auto-Dispatch)`;
                 </button>
               )}
 
-              {/* Live Speech Recognition Transcript Box */}
-              <div className="p-4 rounded-2xl bg-[#FAF8F5] border-2 border-[#CBDCD2] text-left min-h-[90px] flex flex-col justify-center">
-                <span className="text-[13px] uppercase font-bold text-[#2E6B56] block mb-1">
-                  {language === 'hi' ? 'बोले गए शब्द (Live Speech-to-Text):' : 'Live Speech-to-Text Transcript:'}
+              {/* Quick Preset Voice Command Chips */}
+              <div className="space-y-1.5 text-left">
+                <span className="text-[13px] font-bold text-[#4A6B5D] uppercase tracking-wider block">
+                  {language === 'hi' ? 'त्वरित संदेश (1-टैप चुनें):' : 'Quick Voice Presets (Tap to select):'}
                 </span>
-                <p className="text-[20px] font-bold text-[#132A22] leading-snug">
-                  {liveTranscript
-                    ? `"${liveTranscript}"`
-                    : isRecording
-                    ? (language === 'hi' ? 'बोलिए, आपकी आवाज ट्रांसक्राइब हो रही है...' : 'Listening... speak clearly into microphone')
-                    : (language === 'hi' ? 'माइक बटन दबाकर बोलें (जैसे: "मुझे चक्कर आ रहे हैं" या "दवाई ले ली")' : 'Tap record and speak (e.g. "Feeling dizzy" or "Took morning medicine")')}
-                </p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { hi: 'मुझे चक्कर आ रहे हैं', en: 'Feeling dizzy and weak' },
+                    { hi: 'सुबह की दवाई ले ली है', en: 'Took my morning medicine' },
+                    { hi: 'तबीयत ठीक नहीं लग रही', en: 'Not feeling well today' },
+                    { hi: 'कृपया मुझे फोन करें', en: 'Please call me when free' },
+                    { hi: 'बाथरूम के पास फिसल गई', en: 'Fell near bathroom (Urgent)' },
+                  ].map((preset, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setLiveTranscript(language === 'hi' ? preset.hi : preset.en)}
+                      className="text-xs sm:text-sm font-bold px-3 py-2 rounded-xl bg-[#EBF3EE] text-[#1C3F32] border border-[#CBDCD2] hover:bg-[#1C3F32] hover:text-white transition-all active:scale-95"
+                    >
+                      {language === 'hi' ? preset.hi : preset.en}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Live Speech Recognition Transcript & Edit Box */}
+              <div className="p-3.5 rounded-2xl bg-[#FAF8F5] border-2 border-[#CBDCD2] text-left space-y-1.5">
+                <span className="text-[13px] uppercase font-bold text-[#2E6B56] block">
+                  {language === 'hi' ? 'बोले गए शब्द (Transcript / संदेश):' : 'Speech Transcript / Message:'}
+                </span>
+                <input
+                  type="text"
+                  value={liveTranscript}
+                  onChange={(e) => setLiveTranscript(e.target.value)}
+                  placeholder={
+                    isRecording
+                      ? (language === 'hi' ? 'सुन रहे हैं... बोलिए...' : 'Listening... speak now...')
+                      : (language === 'hi' ? 'यहाँ बोलें या टाइप करें...' : 'Speak into mic or type here...')
+                  }
+                  className="w-full min-h-[52px] p-3 text-[18px] sm:text-[20px] font-bold rounded-xl border border-[#CBDCD2] bg-white text-[#132A22] focus:outline-none focus:ring-2 focus:ring-[#1C3F32]"
+                />
               </div>
             </div>
 
@@ -2341,15 +2349,10 @@ Sent automatically via Samarth Watch (5s SOS Auto-Dispatch)`;
               <button
                 type="button"
                 onClick={handleSendVoiceCommand}
-                disabled={!hasRecordedVoice && !liveTranscript && !isRecording}
-                className={`min-h-[64px] rounded-xl font-bold text-[20px] flex items-center justify-center gap-2 ${
-                  hasRecordedVoice || liveTranscript || isRecording
-                    ? 'bg-[#1C3F32] hover:bg-[#132A22] text-white'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                }`}
+                className="min-h-[64px] rounded-xl font-bold text-[20px] flex items-center justify-center gap-2 bg-[#1C3F32] hover:bg-[#132A22] text-white shadow-md active:scale-95 transition-all"
               >
                 <Check className="w-6 h-6" />
-                <span>{language === 'hi' ? 'संदेश भेजें' : 'Send to All'}</span>
+                <span>{language === 'hi' ? 'कोऑर्डिनेटर व परिवार को भेजें' : 'Send to Coordinator & Family'}</span>
               </button>
               <button
                 type="button"
@@ -2365,13 +2368,6 @@ Sent automatically via Samarth Watch (5s SOS Auto-Dispatch)`;
           </div>
         </div>
       )}
-
-      {/* Video Consultation Theater Modal */}
-      <DoctorConsultationModal
-        isOpen={isDocModalOpen}
-        onClose={() => setIsDocModalOpen(false)}
-        seniorName={seniorName}
-      />
     </div>
   );
 };

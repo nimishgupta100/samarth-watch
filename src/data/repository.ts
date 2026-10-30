@@ -316,28 +316,64 @@ class LocalStorageRepository implements ISamarthRepository {
       }
       this.stateCache = JSON.parse(raw) as AppStateData;
 
-      // Ensure Kamla has her baseline hypertension medication active if empty
+      // Ensure Kamla has her baseline medications active if empty
       if (this.stateCache.medicines.length === 0) {
-        const defaultMed: Medicine = {
+        const med1: Medicine = {
           id: 'med-kamla-001',
           seniorId: 'senior-kamla-001',
           name: 'Amlodipine 5mg',
-          instructions: 'Subah nashte ke baad 1 goli',
+          instructions: 'Subah nashte ke baad 1 goli (BP ke liye)',
           scheduledTimes: ['08:30 AM'],
           createdAt: 1730000000000,
         };
-        const defaultDose: DoseRecord = {
+        const med2: Medicine = {
+          id: 'med-kamla-002',
+          seniorId: 'senior-kamla-001',
+          name: 'Metformin 500mg',
+          instructions: 'Dopahar ke khaane ke baad 1 goli (sugar ke liye)',
+          scheduledTimes: ['01:00 PM'],
+          createdAt: 1730000001000,
+        };
+        const med3: Medicine = {
+          id: 'med-kamla-003',
+          seniorId: 'senior-kamla-001',
+          name: 'Atorvastatin 10mg',
+          instructions: 'Raat ko sone se pehle 1 goli (cholesterol ke liye)',
+          scheduledTimes: ['09:00 PM'],
+          createdAt: 1730000002000,
+        };
+        const dose1: DoseRecord = {
           id: 'dose-kamla-today-001',
           seniorId: 'senior-kamla-001',
-          medicineId: defaultMed.id,
-          medicineName: defaultMed.name,
-          dosageInstructions: defaultMed.instructions,
+          medicineId: med1.id,
+          medicineName: med1.name,
+          dosageInstructions: med1.instructions,
           scheduledTime: '08:30 AM',
           scheduledTimestamp: Date.now(),
           status: 'pending',
         };
-        this.stateCache.medicines.push(defaultMed);
-        this.stateCache.doses.push(defaultDose);
+        const dose2: DoseRecord = {
+          id: 'dose-kamla-today-002',
+          seniorId: 'senior-kamla-001',
+          medicineId: med2.id,
+          medicineName: med2.name,
+          dosageInstructions: med2.instructions,
+          scheduledTime: '01:00 PM',
+          scheduledTimestamp: Date.now() + 4.5 * 3600000,
+          status: 'pending',
+        };
+        const dose3: DoseRecord = {
+          id: 'dose-kamla-today-003',
+          seniorId: 'senior-kamla-001',
+          medicineId: med3.id,
+          medicineName: med3.name,
+          dosageInstructions: med3.instructions,
+          scheduledTime: '09:00 PM',
+          scheduledTimestamp: Date.now() + 12.5 * 3600000,
+          status: 'pending',
+        };
+        this.stateCache.medicines.push(med1, med2, med3);
+        this.stateCache.doses.push(dose1, dose2, dose3);
         this.saveState(this.stateCache);
       }
 
