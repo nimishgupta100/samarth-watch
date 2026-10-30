@@ -15,6 +15,7 @@ import { FamilyLayout } from './layouts/FamilyLayout';
 import { LoginPage } from './pages/LoginPage';
 import { SeniorHome } from './pages/SeniorHome';
 import { LandingPage } from './pages/LandingPage';
+import { VoiceAssistant } from './components/VoiceAssistant';
 
 // Lazy-loaded heavy and chart-intensive pages for fast initial bundle
 const CreditsPage = lazy(() => import('./pages/CreditsPage').then(m => ({ default: m.CreditsPage })));
@@ -152,6 +153,8 @@ export function App() {
         <AppProvider>
           <ToastProvider>
             <Router>
+              {/* Voice assistant floats on all authenticated pages */}
+              <VoiceAssistant />
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                   {/* Public routes */}
