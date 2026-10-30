@@ -11,93 +11,49 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      # ── 1. Checkout ──────────────────────────────────────────────────────────
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ── 2. Use the PRE-INSTALLED JDK 17 (no download needed) ────────────────
-      #    ubuntu-latest has JAVA_HOME_17_X64 already set
-      - name: Configure pre-installed JDK 17
-        run: |
-          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> $GITHUB_ENV
-          echo "$JAVA_HOME_17_X64/bin" >> $GITHUB_PATH
-          java -version
-
-      # ── 3. Node 20 ───────────────────────────────────────────────────────────
       - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      # ── 4. Configure pre-installed Android SDK + accept licenses ─────────────
-      #    ubuntu-latest has Android SDK at $ANDROID_SDK_ROOT already
-      - name: Configure Android SDK
-        run: |
-          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-          echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
-          echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          # Accept all licenses silently
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
-          # Ensure we have Android 34 platform and build-tools (download only if missing)
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \
-            "platform-tools" \
-            "platforms;android-34" \
-            "build-tools;34.0.0" || true
-          echo "=== Installed SDK packages ==="
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --list_installed 2>/dev/null | head -20 || true
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-      # ── 5. Install npm dependencies ──────────────────────────────────────────
-      - name: Install npm dependencies
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Install dependencies (includes Capacitor)
         run: npm ci
 
-      # ── 6. Build Vite web app ────────────────────────────────────────────────
       - name: Build web app
         run: npm run build
 
-      # ── 7. Install Capacitor (adds to node_modules, not package.json) ────────
-      - name: Install Capacitor CLI and Android
-        run: |
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap --version
-
-      # ── 8. Add the Android platform ──────────────────────────────────────────
       - name: Add Android platform
         run: npx cap add android
 
-      # ── 9. Sync built web assets into Android project ────────────────────────
-      - name: Sync Capacitor
+      - name: Sync assets to Android
         run: npx cap sync android
 
-      # ── 10. Add permissions to AndroidManifest ───────────────────────────────
-      - name: Patch AndroidManifest.xml
+      - name: Patch AndroidManifest permissions
         run: |
-          MANIFEST="android/app/src/main/AndroidManifest.xml"
-          sed -i \
-            's|<application|<uses-permission android:name="android.permission.VIBRATE"/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation"/>\n    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>\n    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <uses-permission android:name="android.permission.WAKE_LOCK"/>\n    <application|' \
-            "$MANIFEST"
-          echo "Permissions added to manifest"
+          sed -i 's|<application|<uses-permission android:name="android.permission.VIBRATE"/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation"/>\n    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>\n    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <uses-permission android:name="android.permission.WAKE_LOCK"/>\n    <application|' android/app/src/main/AndroidManifest.xml
 
-      # ── 11. Build debug APK with Gradle ──────────────────────────────────────
       - name: Build debug APK
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon
 
-      # ── 12. Collect APK + checksum ───────────────────────────────────────────
-      - name: Collect APK
-        run: |
-          mkdir -p release-apk
-          cp android/app/build/outputs/apk/debug/app-debug.apk \
-             release-apk/SamarthWatch-1.0.0-debug.apk
-          sha256sum release-apk/SamarthWatch-1.0.0-debug.apk > release-apk/checksums.txt
-          ls -lh release-apk/
-
-      # ── 13. Upload APK as downloadable artifact ───────────────────────────────
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: SamarthWatch-1.0.0-debug
-          path: release-apk/
+          path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
