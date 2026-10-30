@@ -178,6 +178,7 @@ export const supabaseSync = {
           plainSummary: v.plainSummary,
           cueTags: v.cueTags,
           isHighPriority: v.isHighPriority,
+          audioBlobUrl: v.audioBlobUrl || null,
         }),
         input_mode: 'simulated_text_not_voice',
         data_origin: 'live_sync',

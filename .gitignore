@@ -52,3 +52,4 @@ scripts/uploadToSupabase.mjs
 !.env.example
 scripts/.env
 .vercel
+*.zip

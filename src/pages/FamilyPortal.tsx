@@ -53,7 +53,10 @@ import {
   Wifi,
   Radio,
   Share2,
-  TrendingUp
+  TrendingUp,
+  Volume2,
+  Play,
+  Mic
 } from 'lucide-react';
 import { useWearable } from '../wearables/useWearable';
 import { formatISTDisplay } from '../wearables/normalize';
@@ -131,6 +134,42 @@ export const FamilyPortal: React.FC = () => {
 
   // Messages input state (Section 5.5)
   const [messageInput, setMessageInput] = useState('');
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+
+  const handlePlayVoice = (id: string, textToSpeak?: string, audioBlobUrl?: string) => {
+    setPlayingVoiceId(id);
+    if (audioBlobUrl) {
+      try {
+        const audio = new Audio(audioBlobUrl);
+        audio.play().then(() => {
+          showToast('Playing audio check-in recording', 'info');
+        }).catch(() => {
+          speakFallback(textToSpeak || 'Voice check-in note');
+        });
+        audio.onended = () => setPlayingVoiceId(null);
+        return;
+      } catch {
+        // fallback
+      }
+    }
+    speakFallback(textToSpeak || 'Voice check-in note');
+  };
+
+  const speakFallback = (text: string) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const clean = text.replace(/[#*`_~]/g, '');
+      const utterance = new SpeechSynthesisUtterance(clean);
+      utterance.rate = 0.9;
+      utterance.onend = () => setPlayingVoiceId(null);
+      utterance.onerror = () => setPlayingVoiceId(null);
+      window.speechSynthesis.speak(utterance);
+      showToast('Playing voice transcript aloud', 'info');
+    } else {
+      showToast(text, 'info');
+      setTimeout(() => setPlayingVoiceId(null), 2500);
+    }
+  };
 
   // Report state (Section 5.6)
   const [reportType, setReportType] = useState<'daily' | 'weekly'>('weekly');
@@ -576,20 +615,74 @@ export const FamilyPortal: React.FC = () => {
                 </div>
               </div>
 
-              {/* Latest Voice Note Summary (only if consent allows) */}
+              {/* Recorded Voice Notes & Check-ins from Senior */}
               {voiceNotes.length > 0 && (
-                <div className="bg-cream border border-border rounded-2xl p-5 shadow-xs space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-forest uppercase tracking-wider">
-                      Latest Morning Check-in Summary
-                    </span>
-                    <span className="text-[11px] text-ink-muted">
-                      {new Date(voiceNotes[0].timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                <div className="bg-cream border border-border rounded-2xl p-5 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between border-b border-border pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <Mic className="w-4 h-4 text-forest" />
+                      <h4 className="text-xs font-bold text-ink uppercase tracking-wider">
+                        {selectedSenior.name}'s Voice Check-ins & Messages
+                      </h4>
+                    </div>
+                    <span className="text-[10px] font-bold bg-mint-deep text-forest px-2 py-0.5 rounded border border-border">
+                      {voiceNotes.length} {voiceNotes.length === 1 ? 'Recording' : 'Recordings'}
                     </span>
                   </div>
-                  <p className="text-xs sm:text-sm text-ink font-medium leading-relaxed bg-white p-3.5 rounded-xl border border-border">
-                    "{voiceNotes[0].plainSummary}"
-                  </p>
+
+                  <div className="space-y-3">
+                    {voiceNotes.map((vn) => (
+                      <div
+                        key={vn.id}
+                        className="bg-white border border-border rounded-xl p-4 space-y-2.5 shadow-2xs"
+                      >
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-mint-deep text-forest flex items-center justify-center shrink-0">
+                              <Volume2 className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <span className="text-xs font-bold text-ink block">
+                                {new Date(vn.timestamp).toLocaleDateString([], {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                })} • {new Date(vn.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                              <span className="text-[10px] text-ink-muted">
+                                Duration: {vn.durationSeconds || 10} seconds
+                              </span>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handlePlayVoice(vn.id, vn.transcript || vn.plainSummary, vn.audioBlobUrl)}
+                            className="min-h-[36px] px-3.5 py-1.5 bg-forest hover:bg-forest/90 text-cream text-xs font-bold rounded-lg inline-flex items-center gap-1.5 transition-colors shadow-2xs"
+                          >
+                            <Play className="w-3.5 h-3.5" />
+                            <span>{playingVoiceId === vn.id ? 'Playing...' : 'Play Audio'}</span>
+                          </button>
+                        </div>
+
+                        {/* What senior said (transcript) */}
+                        <div className="p-3 bg-mint-deep/30 rounded-lg border border-border/50 text-xs text-ink space-y-1">
+                          <span className="text-[10px] uppercase font-bold text-forest block">
+                            Transcribed Speech ({selectedSenior.name}):
+                          </span>
+                          <p className="font-medium text-ink leading-relaxed">
+                            "{vn.transcript || vn.plainSummary}"
+                          </p>
+                        </div>
+
+                        {/* Family plain summary */}
+                        <div className="text-[11px] text-ink-muted px-1">
+                          <strong className="text-ink">Daily Summary: </strong>
+                          {vn.plainSummary}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -1589,6 +1682,7 @@ export const FamilyPortal: React.FC = () => {
                 ) : (
                   chatMessages.map((msg) => {
                     const isFamily = msg.senderRole === 'family';
+                    const isSenior = (msg as any).senderRole === 'senior';
                     const timeStr = msg.timestamp
                       ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                       : '';
@@ -1598,16 +1692,32 @@ export const FamilyPortal: React.FC = () => {
                         className={`flex flex-col ${isFamily ? 'items-end' : 'items-start'}`}
                       >
                         <span className="text-[10px] font-semibold text-ink-muted px-1 mb-0.5">
-                          {isFamily ? 'You (Karishma)' : (msg.senderName || 'Coordinator')}
+                          {isFamily
+                            ? 'You (Karishma)'
+                            : isSenior
+                            ? `${selectedSenior.name} (Voice Note)`
+                            : (msg.senderName || 'Coordinator')}
                         </span>
                         <div
                           className={`max-w-[85%] p-3.5 rounded-xl text-xs sm:text-sm leading-relaxed ${
                             isFamily
                               ? 'bg-forest text-cream rounded-br-none'
+                              : isSenior
+                              ? 'bg-[#EBF3EE] text-[#132A22] border-2 border-[#1C3F32] rounded-bl-none shadow-xs'
                               : 'bg-white text-ink border border-border rounded-bl-none shadow-2xs'
                           }`}
                         >
-                          {msg.text}
+                          <div className="whitespace-pre-wrap">{msg.text}</div>
+                          {isSenior && (
+                            <button
+                              type="button"
+                              onClick={() => speakFallback(msg.text)}
+                              className="mt-2 text-[11px] font-bold text-forest bg-white px-2.5 py-1 rounded border border-[#CBDCD2] inline-flex items-center gap-1 hover:bg-mint-deep"
+                            >
+                              <Volume2 className="w-3 h-3" />
+                              <span>Listen</span>
+                            </button>
+                          )}
                         </div>
                         <span className="text-[10px] text-ink-muted mt-1 px-1">{timeStr}</span>
                       </div>

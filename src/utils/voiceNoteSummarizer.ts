@@ -11,7 +11,7 @@ export interface VoiceNoteProcessResult {
   plainSummary: string;
   extractedCues: CueSummary[];
   isHighPriority: boolean;
-  source: 'DEMO_SIMULATED';
+  source: 'DEMO_SIMULATED' | 'SPEECH_RECOGNITION';
 }
 
 export interface VoiceNoteSummarizer {
@@ -19,11 +19,81 @@ export interface VoiceNoteSummarizer {
     audioBlobUrl: string | null,
     durationSec: number,
     seniorName: string,
-    lang: SupportedLanguage
+    lang: SupportedLanguage,
+    rawTranscript?: string
   ): Promise<VoiceNoteProcessResult>;
 }
 
-// DEMO: rule-based cue extraction. PRODUCTION: Whisper + summarizer with PII masking before any external call.
+// Indic & English clinical cue patterns
+const CLINICAL_CUE_PATTERNS = [
+  {
+    tag: 'fall',
+    severity: 'severe' as const,
+    regex: /(?:fall|fell|falling|slip|tripped|gir\s*gay|gir\s*padi|gir\s*gaya|gir\s*gayi|giri|gira)/i,
+    summaryEn: 'Resident reported a fall incident.',
+    summaryHi: 'निवासी ने गिरने (fall) की सूचना दी।',
+  },
+  {
+    tag: 'chest pain',
+    severity: 'severe' as const,
+    regex: /(?:chest\s*pain|heart\s*pain|seene\s*mein\s*dard|chhati|breathless|saas\s*phool|saans)/i,
+    summaryEn: 'Resident reported chest discomfort or breathing difficulty.',
+    summaryHi: 'निवासी ने सीने में दर्द या सांस लेने में परेशानी की सूचना दी।',
+  },
+  {
+    tag: 'dizziness',
+    severity: 'mild' as const,
+    regex: /(?:dizzy|dizziness|faint|lightheaded|chakkar|sar\s*ghoom|sir\s*ghoom)/i,
+    summaryEn: 'Resident reported dizziness or feeling lightheaded.',
+    summaryHi: 'निवासी ने चक्कर आने या सिर घूमने की बात कही।',
+  },
+  {
+    tag: 'pain',
+    severity: 'moderate' as const,
+    regex: /(?:pain|hurts|aching|sore|dard|ghutna|kamar|peeth|sir\s*dard|sar\s*dard|headache)/i,
+    summaryEn: 'Resident reported physical pain or body ache.',
+    summaryHi: 'निवासी ने शरीर में दर्द या असहजता बताई।',
+  },
+  {
+    tag: 'fever',
+    severity: 'moderate' as const,
+    regex: /(?:fever|temperature|chills|bukhar|tap|garam|thandi)/i,
+    summaryEn: 'Resident reported feverish symptoms.',
+    summaryHi: 'निवासी ने बुखार या तापमान बढ़ने के लक्षण बताए।',
+  },
+  {
+    tag: 'low appetite',
+    severity: 'mild' as const,
+    regex: /(?:appetite|eating|eat\s*much|food|nausea|vomit|bhookh|khana\s*nahi|ulti)/i,
+    summaryEn: 'Resident reported low appetite or stomach discomfort.',
+    summaryHi: 'निवासी ने कम भूख या खाना न खाने की जानकारी दी।',
+  },
+  {
+    tag: 'poor sleep',
+    severity: 'mild' as const,
+    regex: /(?:sleep|slept|woke\s*up|tired|exhausted|neend|so\s*nahi|thakan)/i,
+    summaryEn: 'Resident reported disrupted or inadequate sleep.',
+    summaryHi: 'निवासी ने नींद न आने या थकान की बात कही।',
+  },
+  {
+    tag: 'loneliness',
+    severity: 'moderate' as const,
+    regex: /(?:lonely|loneliness|alone|call\s*me|children|akela|akeli|baat\s*nahi|phone\s*nahi)/i,
+    summaryEn: 'Resident expressed feeling lonely or low social contact.',
+    summaryHi: 'निवासी ने अकेलापन महसूस करने की बात कही।',
+  },
+  {
+    tag: 'medicine',
+    severity: 'mild' as const,
+    regex: /(?:medicine|tablet|dose|pill|dawa|goli|aushadhi)/i,
+    summaryEn: 'Resident mentioned medication routine.',
+    summaryHi: 'निवासी ने दवाई या खुराक का उल्लेख किया।',
+  },
+];
+
+const HIGH_PRIORITY_TAGS = ['fall', 'confusion', 'chest pain'];
+
+// DEMO fallback pools
 const DEMO_TRANSCRIPTS_EN = [
   {
     transcript: 'I woke up feeling dizzy this morning. Did not eat much, just had tea.',
@@ -83,18 +153,59 @@ const DEMO_TRANSCRIPTS_HI = [
   },
 ];
 
-const HIGH_PRIORITY_TAGS = ['fall', 'confusion'];
-
 export class DemoVoiceNoteSummarizer implements VoiceNoteSummarizer {
   async process(
     _audioBlobUrl: string | null,
     _durationSec: number,
-    _seniorName: string,
-    lang: SupportedLanguage
+    seniorName: string,
+    lang: SupportedLanguage,
+    rawTranscript?: string
   ): Promise<VoiceNoteProcessResult> {
-    // Simulate async processing delay (demo only)
-    await new Promise((r) => setTimeout(r, 600));
+    // If real speech was captured from Web Speech API
+    if (rawTranscript && rawTranscript.trim().length > 0) {
+      const cleaned = rawTranscript.trim();
+      const extractedCues: CueSummary[] = [];
 
+      for (const pattern of CLINICAL_CUE_PATTERNS) {
+        const match = cleaned.match(pattern.regex);
+        if (match) {
+          extractedCues.push({
+            tag: pattern.tag,
+            severity: pattern.severity,
+            quote: match[0],
+          });
+        }
+      }
+
+      const isHighPriority = extractedCues.some(
+        (c) => HIGH_PRIORITY_TAGS.includes(c.tag) || c.severity === 'severe'
+      );
+
+      let plainSummary: string;
+      if (extractedCues.length > 0) {
+        const cuesList = extractedCues.map((c) => c.tag).join(', ');
+        plainSummary =
+          lang === 'hi'
+            ? `${seniorName} जी का संदेश: "${cleaned}"। नैदानिक संकेत मिले: ${cuesList}।`
+            : `${seniorName} reported: "${cleaned}". Clinical cues identified: ${cuesList}.`;
+      } else {
+        plainSummary =
+          lang === 'hi'
+            ? `${seniorName} जी का संदेश: "${cleaned}"। कोई गंभीर लक्षण नहीं मिला।`
+            : `${seniorName} reported: "${cleaned}". Routine check-in recorded.`;
+      }
+
+      return {
+        transcript: cleaned,
+        plainSummary,
+        extractedCues,
+        isHighPriority,
+        source: 'SPEECH_RECOGNITION',
+      };
+    }
+
+    // Fallback simulated pool
+    await new Promise((r) => setTimeout(r, 400));
     const pool = lang === 'hi' ? DEMO_TRANSCRIPTS_HI : DEMO_TRANSCRIPTS_EN;
     const sample = pool[Math.floor(Math.random() * pool.length)];
 

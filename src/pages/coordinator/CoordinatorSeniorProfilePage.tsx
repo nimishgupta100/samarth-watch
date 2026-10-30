@@ -67,6 +67,7 @@ import {
   CoordinatorAgentTask, 
   AgentActivityLogEntry 
 } from '../../services/n8nAgentService';
+import { BLESmartWatchScanner } from '../../components/wearable/BLESmartWatchScanner';
 
 interface CoordinatorSeniorProfilePageProps {
   seniorIdProp?: string;
@@ -129,6 +130,7 @@ export const CoordinatorSeniorProfilePage: React.FC<CoordinatorSeniorProfilePage
   }, [activeId, repoRev]);
 
   const [coordinatorMessageInput, setCoordinatorMessageInput] = useState('');
+  const [showBLEModal, setShowBLEModal] = useState(false);
 
   const handleCoordinatorSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1195,6 +1197,18 @@ export const CoordinatorSeniorProfilePage: React.FC<CoordinatorSeniorProfilePage
                   </div>
                 )}
               </div>
+
+              {/* BLE Smart Watch Scanner */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowBLEModal(true)}
+                  className="w-full min-h-[38px] px-3 py-1.5 rounded-lg border border-border bg-white hover:bg-mint-deep text-xs font-bold text-forest flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <Watch className="w-3.5 h-3.5" />
+                  <span>BLE Smartwatch Scanner</span>
+                </button>
+              </div>
             </div>
 
             {/* Quality Summary & Clinician Threshold Editor */}
@@ -1767,6 +1781,7 @@ export const CoordinatorSeniorProfilePage: React.FC<CoordinatorSeniorProfilePage
               ) : (
                 seniorChatMessages.map((msg) => {
                   const isCoordinator = msg.senderRole === 'coordinator';
+                  const isSenior = (msg as any).senderRole === 'senior';
                   const timeStr = msg.timestamp
                     ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                     : '';
@@ -1776,16 +1791,32 @@ export const CoordinatorSeniorProfilePage: React.FC<CoordinatorSeniorProfilePage
                       className={`flex flex-col ${isCoordinator ? 'items-end' : 'items-start'}`}
                     >
                       <span className="text-[10px] font-semibold text-ink-muted px-1 mb-0.5">
-                        {isCoordinator ? 'You (Nimish Gupta)' : (msg.senderName || 'Karishma')}
+                        {isCoordinator
+                          ? 'You (Nimish Gupta)'
+                          : isSenior
+                          ? `${senior.name} (Voice Note)`
+                          : (msg.senderName || 'Karishma')}
                       </span>
                       <div
                         className={`max-w-[85%] p-3.5 rounded-xl text-xs sm:text-sm leading-relaxed ${
                           isCoordinator
                             ? 'bg-forest text-cream rounded-br-none'
+                            : isSenior
+                            ? 'bg-[#EBF3EE] text-[#132A22] border-2 border-[#1C3F32] rounded-bl-none shadow-xs'
                             : 'bg-white text-ink border border-border rounded-bl-none shadow-2xs'
                         }`}
                       >
-                        {msg.text}
+                        <div className="whitespace-pre-wrap">{msg.text}</div>
+                        {isSenior && (
+                          <button
+                            type="button"
+                            onClick={() => speakFallback(msg.text)}
+                            className="mt-2 text-[11px] font-bold text-forest bg-white px-2.5 py-1 rounded border border-[#CBDCD2] inline-flex items-center gap-1 hover:bg-mint-deep"
+                          >
+                            <Volume2 className="w-3 h-3" />
+                            <span>Listen</span>
+                          </button>
+                        )}
                       </div>
                       <span className="text-[10px] text-ink-muted mt-1 px-1">{timeStr}</span>
                     </div>
@@ -1988,6 +2019,27 @@ export const CoordinatorSeniorProfilePage: React.FC<CoordinatorSeniorProfilePage
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* BLE Smartwatch Scanner Modal */}
+      {showBLEModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h3 className="font-bold text-ink">BLE Smartwatch Scanner</h3>
+              <button
+                type="button"
+                onClick={() => setShowBLEModal(false)}
+                className="p-2 rounded-lg hover:bg-mint-deep"
+              >
+                <X className="w-5 h-5 text-ink" />
+              </button>
+            </div>
+            <div className="p-4">
+              <BLESmartWatchScanner seniorId={senior?.id || 'senior-kamla-001'} compact />
+            </div>
           </div>
         </div>
       )}

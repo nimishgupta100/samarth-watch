@@ -140,7 +140,7 @@ interface AppContextType {
 
   // Voice Notes & Checkins
   voiceNotes: SeniorVoiceNote[];
-  addSeniorVoiceNote: (durationSec: number, audioBlobUrl: string | null) => Promise<void>;
+  addSeniorVoiceNote: (durationSec: number, audioBlobUrl: string | null, customTranscript?: string) => Promise<void>;
   todayCheckinAnswer: { q1?: number; q2?: number; q3?: number; q4?: number } | null;
   saveCheckinAnswers: (answers: { q1: number; q2: number; q3: number; q4: number }) => void;
 
@@ -1004,15 +1004,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Voice Notes
-  const addSeniorVoiceNote = async (durationSec: number, audioBlobUrl: string | null) => {
+  const addSeniorVoiceNote = async (durationSec: number, audioBlobUrl: string | null, customTranscript?: string) => {
     const result = await voiceNoteSummarizer.process(
       audioBlobUrl,
       durationSec,
       selectedSenior.name,
-      language
+      language,
+      customTranscript
     );
 
-    repository.addVoiceNote({
+    const newNote = repository.addVoiceNote({
       seniorId: selectedSenior.id,
       coordinatorId: selectedSenior.assignedCoordinatorId,
       durationSeconds: durationSec,
@@ -1046,6 +1047,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         actionLabel: 'View update',
       });
     }
+
+    // Also mirror to direct two-way chat so family and coordinator see the voice message in chat thread
+    repository.addChatMessage({
+      seniorId: selectedSenior.id,
+      senderRole: 'senior' as any,
+      senderName: selectedSenior.name,
+      text: `🎤 Voice Note: "${result.transcript}"\n(${result.plainSummary})`,
+    });
   };
 
   const saveCheckinAnswers = (answers: { q1: number; q2: number; q3: number; q4: number }) => {

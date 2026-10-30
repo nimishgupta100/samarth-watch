@@ -217,6 +217,7 @@ class LocalStorageRepository implements ISamarthRepository {
               plainSummary: rem.plainSummary || '',
               cueTags: rem.cueTags || [],
               isHighPriority: Boolean(rem.isHighPriority),
+              audioBlobUrl: rem.audioBlobUrl || undefined,
             });
             changed = true;
           }
@@ -532,7 +533,15 @@ class LocalStorageRepository implements ISamarthRepository {
   // --- Doses ---
   public getDoses(seniorId?: string): DoseRecord[] {
     const doses = this.getState().doses;
-    if (seniorId) return doses.filter((d) => d.seniorId === seniorId);
+    if (seniorId) {
+      return doses.filter(
+        (d) =>
+          d.seniorId === seniorId ||
+          (seniorId.includes('kamla') && d.seniorId.includes('kamla')) ||
+          (seniorId === 'senior-001' && d.seniorId === 'senior-kamla-001') ||
+          (seniorId === 'senior-kamla-001' && d.seniorId === 'senior-001')
+      );
+    }
     return doses;
   }
 
@@ -590,7 +599,15 @@ class LocalStorageRepository implements ISamarthRepository {
   // --- Voice Notes ---
   public getVoiceNotes(seniorId?: string, coordinatorId?: string): VoiceNoteRecord[] {
     let list = this.getState().voiceNotes;
-    if (seniorId) list = list.filter((v) => v.seniorId === seniorId);
+    if (seniorId) {
+      list = list.filter(
+        (v) =>
+          v.seniorId === seniorId ||
+          (seniorId.includes('kamla') && v.seniorId.includes('kamla')) ||
+          (seniorId === 'senior-001' && v.seniorId === 'senior-kamla-001') ||
+          (seniorId === 'senior-kamla-001' && v.seniorId === 'senior-001')
+      );
+    }
     if (coordinatorId) list = list.filter((v) => v.coordinatorId === coordinatorId);
     return list;
   }
