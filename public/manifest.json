@@ -1,0 +1,16 @@
+{
+  "short_name": "Samarth",
+  "name": "Samarth Watch - Elder Care Portal",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512"
+    }
+  ],
+  "start_url": "/senior-home",
+  "background_color": "#F9F8F6",
+  "theme_color": "#1C3F32",
+  "display": "standalone",
+  "orientation": "portrait"
+}

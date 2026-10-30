@@ -5,25 +5,25 @@
 
 ---
 
-## 🎯 Purpose & Philosophy
-India has over 150 million elders aged 60+, with millions living independently while adult children work in distant cities or abroad. In this population, health decline is rarely an acute surprise—it manifests as gradual whispers: a missed evening medicine, poorer sleep, reduced appetite, an unreported bathroom slip, or a quiet withdrawal from conversation.
+## Purpose & Philosophy
+India has over 150 million elders aged 60+, with millions living independently while adult children work in distant cities or abroad. In this population, health decline is rarely an acute surprise: it manifests as gradual whispers: a missed evening medicine, poorer sleep, reduced appetite, an unreported bathroom slip, or a quiet withdrawal from conversation.
 
 **Samarth Watch** is an AI-powered early-warning system designed specifically for **Care Coordinators**. Every morning, a coordinator opens the dashboard and immediately sees:
-1. **Who needs attention today** (ranked by personal risk deviation score, 0–100)
+1. **Who needs attention today** (ranked by personal risk deviation score, 0 to 100)
 2. **Why** (plain-language explanation matching exact additive score contributions)
 3. **What to do next** (concrete recommended action chip and a culturally attuned Hindi/English call script)
 
-### 🛡️ Fundamental Principles
+### Fundamental Principles
 - **Risk Signal, Not a Diagnosis:** The system detects multi-modal pattern anomalies and routes them to a human Care Coordinator. It **never** labels a senior with a medical condition or disease.
 - **Personal Baselines over Population Averages:** An elder with an established baseline BP of 110 mmHg who rises to 135 mmHg is experiencing a significant +23% shift, even though 135 mmHg is clinically "normal" by population standards. Samarth Watch benchmarks every individual against their own historical band.
-- **Alert Fatigue Protection:** Daily caseload is gated to **12–15 alerts per coordinator per day** using dynamic thresholding and feedback calibration.
+- **Alert Fatigue Protection:** Daily caseload is gated to **12 to 15 alerts per coordinator per day** using dynamic thresholding and feedback calibration.
 
 ---
 
-## 🚀 Live Demo Pages & Navigation
+## Live Demo Pages & Navigation
 
 ### 1. Coordinator Hero Screen: "Today's Priorities" (`/`)
-- **Daily Caseload Triage:** Ranked list of alert cards sorted by urgency (Critical `>70`, Moderate `45–70`).
+- **Daily Caseload Triage:** Ranked list of alert cards sorted by urgency (Critical `>70`, Moderate `45 to 70`).
 - **Fatigue Protection:** Live Daily Alert Cap indicator (e.g. `12 / 15` alerts today).
 - **Rich Context on Every Card:** 14-day trend sparkline, days since personal baseline shift, top 3 plain-language reasons, recommended action chip (`Call today`, `Schedule doctor visit`, `Medicine review`, `Contact family`).
 - **Interactive Feedback Loop:** "Useful" vs "Not useful" thumbs feedback updates the live "Alert Precision this week" metric. "Mark as done" and "Snooze 24h" actions for queue resolution.
@@ -50,7 +50,7 @@ India has over 150 million elders aged 60+, with millions living independently w
 
 ### 5. Family Companion Summary (`/family-summary`)
 - **Warm, Non-Alarmist Tone:** Weekly summary letter written in gentle, reassuring Hindi or English.
-- **Week-at-a-Glance Icons:** Sleep 🌙, Appetite 🍲, Medicines 💊, and Mood 😊 without medical jargon.
+- **Week-at-a-Glance Icons:** Sleep, Appetite, Medicines, and Mood shown with simple line icons and no medical jargon.
 - **Urgent Alert Banner:** Only triggered for critical events under coordinator review.
 - **Senior-First Consent Enforcement:** If the senior pauses consent, the family view is instantly blocked with a respectful explanation of senior autonomy.
 
@@ -69,7 +69,7 @@ India has over 150 million elders aged 60+, with millions living independently w
 
 ---
 
-## 🔬 Synthetic Cohort & Ground Truth Engineering
+## Synthetic Cohort & Ground Truth Engineering
 
 The dataset is generated via a reproducible seeded pseudo-random engine (`src/data/mockDataGenerator.ts`) containing:
 - **200 Seniors** across 10 Indian cities (Lucknow, Delhi NCR, Chandigarh, Jaipur, Bengaluru, Pune, Kolkata, Mumbai, Ahmedabad, Dehradun).
@@ -90,7 +90,7 @@ The dataset is generated via a reproducible seeded pseudo-random engine (`src/da
 
 ---
 
-## 🛠️ Tech Stack & Architecture
+## Tech Stack & Architecture
 
 - **Framework:** React 18 + TypeScript + Vite
 - **Styling:** Tailwind CSS + Radix UI conventions
@@ -101,7 +101,7 @@ The dataset is generated via a reproducible seeded pseudo-random engine (`src/da
 
 ---
 
-## 📦 Running the Application Locally
+## Running the Application Locally
 
 ### Prerequisites
 - Node.js `v18+` or `v20+` (tested on Node v24)
@@ -110,7 +110,7 @@ The dataset is generated via a reproducible seeded pseudo-random engine (`src/da
 ### Installation
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/samarth-watch.git
+# Clone the repository from your team's Git remote, then enter the folder
 cd samarth-watch
 
 # Install dependencies
@@ -129,5 +129,71 @@ npm run preview
 
 ---
 
-## ⚖️ Legal & Medical Disclaimer
+## Wearable Device Integration & Ingestion Pipeline
+
+Samarth Watch includes a comprehensive, production-ready client architecture (`src/wearables/`) for ingesting vitals from smart bands, watches, rings, and home health devices.
+
+### 1. Browser & Device Realities: What Works Now vs What Doesn't
+* **What works in this prototype**:
+  - **In-Memory Simulator Provider (`SimulatedWearableProvider`)**: 7 deterministic scenarios (`normal`, `rising_resting_hr`, `sustained_low_spo2`, `device_silent`, `battery_low`, `fall_detected`, `device_sos`) for full testing without hardware.
+  - **Standard Web Bluetooth (`WebBluetoothProvider`)**: Connects directly from supported Chromium browsers (Chrome/Edge on Android, macOS, Windows, ChromeOS) to real Bluetooth Low Energy (BLE) health peripherals exposing standard GATT profiles.
+* **What cannot work from a web page alone**:
+  - **iOS Mobile Browsers**: WebKit/iOS Safari explicitly does not implement Web Bluetooth API.
+  - **Proprietary Consumer Smartwatches (Apple Watch, Samsung Galaxy Watch, Fitbit, Garmin, Oura)**: These devices do not expose open standard GATT services to web pages. Their health metrics are restricted to native sandboxes (Apple HealthKit, Android Health Connect) or vendor cloud APIs requiring developer licenses and OAuth backends.
+  - **Continuous Background Collection**: Browsers cannot poll Web Bluetooth when the tab is closed or backgrounded.
+
+### 2. Standard BLE GATT Services Supported
+The pipeline contains binary parsers with bitmask decoders and unit conversions for:
+* **Heart Rate Measurement** (`0x2A37` under service `0x180D`): Parses 8-bit / 16-bit heart rate, contact detection flags, energy expended, and RR intervals.
+* **Battery Level** (`0x2A19` under service `0x180F`): Parses battery percentage with bounds enforcement.
+* **Pulse Oximeter Continuous Measurement** (`0x2A5F` under service `0x1822`): Parses SpO2 % and pulse rate using IEEE-11073 16-bit SFLOAT decoder.
+* **Blood Pressure Measurement** (`0x2A35` under service `0x1810`): Decodes systolic, diastolic, mean arterial pressure (MAP), and converts kPa to mmHg when required.
+* **Weight Scale Measurement** (`0x2A9D` under service `0x181D`): Decodes kilograms / imperial pounds.
+
+### 3. How to Test With a Real BLE Device
+1. Open Samarth Watch on a compatible browser (Google Chrome or Microsoft Edge on Android or Desktop).
+2. Ensure your computer or phone's Bluetooth is turned on.
+3. Power on a standard BLE peripheral (such as a Polar/Wahoo heart rate chest strap or a Wellue BLE pulse oximeter).
+4. Navigate to the **Care Coordinator Senior Profile** (`/coordinator/seniors`) or Senior Band Settings.
+5. Click **"Pair Bluetooth Device"**. The browser's native device picker dialog will appear.
+6. Select your device. Live readings will stream directly through the quality filter, deduplication engine, and rule evaluation.
+
+### 4. Ingestion Contract (`POST /v1/ingest/readings`)
+For production integration with native companion apps or vendor cloud webhook forwards, the pipeline exposes a typed contract in `src/wearables/ingestContract.ts`:
+```json
+{
+  "seniorId": "senior-001",
+  "deviceId": "ble-polar-h10-a4f2",
+  "deviceType": "heart_rate_strap",
+  "samples": [
+    {
+      "type": "heart_rate",
+      "value": 74,
+      "unit": "bpm",
+      "timestamp": "2026-10-30T10:15:00.000Z",
+      "qualityScore": 0.95
+    }
+  ],
+  "clientBatchId": "batch-179330-001"
+}
+```
+* **Deduplication & Idempotency**: Each sample generates a deterministic key (`seniorId + type + timestamp`). Retransmitted duplicate samples are ignored.
+* **Quality Filter**: Physiological plausibility ranges (e.g. Heart Rate 30–240 bpm, SpO2 70–100%) reject artifacts with structured rejection logging.
+* **Two-Tier Safety Rules Engine**:
+  - **Tier 1 (Trend Alerts)**: Sustained deviations (e.g. 3 consecutive low SpO2 readings or rising resting HR) route as high-priority coordinator tasks.
+  - **Tier 2 (Emergencies)**: Accelerometer fall detections and physical device SOS triggers immediately bypass routine batching, triggering parallel coordinator and family emergency notifications with 60s debounce protection.
+
+### 5. Production Companion App & Cloud Architecture
+* **Companion App Path (`CompanionAppProvider`)**: Lightweight native mobile app (Flutter or React Native) running in the background on the senior's or caregiver's phone. Interacts with Apple HealthKit / Android Health Connect and batches encrypted readings to the `/v1/ingest/readings` endpoint.
+* **Cloud Sync Path (`CloudSyncProvider`)**: Server-to-server OAuth webhooks connecting to authorized cloud provider platforms (Withings Health Mate, Garmin Health, Fitbit Web API) with strict DPDP tokenization.
+
+### 6. Map Tiles & Location Privacy Notice
+* **OpenStreetMap Tile Usage**: The map display uses public OpenStreetMap tile servers (`https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`). These public servers are operated by the OpenStreetMap Foundation strictly for light use and testing. Production deployments must use a paid commercial provider (e.g. MapTiler, Stadia Maps) or a self-hosted tile server.
+* **Tile Privacy**: HTTP tile requests reveal the viewed bounding box / coordinates to the tile server.
+* **Background Limits**: The web app cannot collect location or Bluetooth readings in the background or when the browser tab is closed. Live tracking requires the application window to remain open.
+* **Simulated Data**: Prototype mock coordinates and simulated sensor streams are clearly labeled and do not represent real-time physical telemetry.
+
+---
+
+## Legal & Medical Disclaimer
 *Samarth Watch is a prototype risk detection system created for demonstration purposes. It does not provide medical advice, diagnosis, or treatment recommendations. All risk alerts must be triaged by qualified human coordinators.*

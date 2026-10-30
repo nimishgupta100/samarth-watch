@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700" width="900" height="700">
+  <defs>
+    <linearGradient id="splitGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#EEF5F1" />
+      <stop offset="100%" stop-color="#E2EEE7" />
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#splitGrad)" />
+  <g fill="none" stroke="#6E9A82" stroke-width="1.5" opacity="0.6">
+    <rect x="150" y="120" width="600" height="460" rx="24" />
+    <circle cx="450" cy="350" r="140" />
+    <path d="M 250 480 Q 450 320 650 480" />
+  </g>
+  <text x="450" y="360" font-family="Plus Jakarta Sans, sans-serif" font-size="20" font-weight="600" fill="#1F4D3F" text-anchor="middle" opacity="0.8">
+    Made for Everyday Senior Living
+  </text>
+</svg>

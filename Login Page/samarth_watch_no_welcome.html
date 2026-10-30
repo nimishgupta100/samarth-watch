@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samarth Watch - Portal Access</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        samarth: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="h-full flex flex-col justify-between bg-gradient-to-br from-slate-900 via-slate-800 to-teal-950 text-slate-800 antialiased min-h-screen">
+
+    <!-- TOP HEADER / BRAND BAR -->
+    <header class="w-full px-6 py-4 flex items-center justify-between border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50">
+        <div class="flex items-center space-x-3">
+            <div class="bg-gradient-to-tr from-teal-500 to-emerald-400 p-2.5 rounded-xl text-slate-950 font-bold shadow-lg shadow-teal-500/20">
+                <i data-lucide="heart-pulse" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <span class="font-bold text-xl tracking-tight text-white block leading-none">Samarth Watch</span>
+                <span class="text-[11px] text-teal-400 font-semibold tracking-wider uppercase block mt-1">AI Early Warning Wellbeing System</span>
+            </div>
+        </div>
+
+        <!-- Language Toggle -->
+        <div class="flex items-center bg-slate-800/90 p-1 rounded-xl border border-slate-700/80 text-xs font-semibold">
+            <button onclick="setLanguage('en')" id="langEnBtn" class="px-3 py-1 rounded-lg transition bg-teal-600 text-white shadow-sm">English</button>
+            <button onclick="setLanguage('hi')" id="langHiBtn" class="px-3 py-1 rounded-lg transition text-slate-400 hover:text-white">हिंदी</button>
+        </div>
+    </header>
+
+    <!-- MAIN DYNAMIC CONTAINER -->
+    <main class="flex-1 flex items-center justify-center p-4 sm:p-6 my-auto">
+        
+        <!-- ================================================================= -->
+        <!-- VIEW 1: LOGIN FORM VIEW -->
+        <!-- ================================================================= -->
+        <div id="view-login" class="w-full max-w-md bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100/20 space-y-6">
+            
+            <!-- Login Header -->
+            <div class="text-center space-y-1">
+                <h1 id="lblLoginTitle" class="text-2xl font-extrabold text-slate-900 tracking-tight">Portal Sign-In</h1>
+                <p id="lblLoginSub" class="text-xs text-slate-500">Access early-warning wellbeing tools for senior care</p>
+            </div>
+
+            <!-- Role Tabs (Reordered: Senior/Family -> Care Coordinator -> Ops Manager) -->
+            <div class="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-2xl border border-slate-200/80 text-[11px] font-bold">
+                <button onclick="switchRoleTab('senior')" id="tab-senior" class="role-tab py-2.5 rounded-xl transition text-center bg-teal-600 text-white shadow-sm font-bold">
+                    <span id="tabLabelSenior">Senior / Family</span>
+                </button>
+                <button onclick="switchRoleTab('coordinator')" id="tab-coordinator" class="role-tab py-2.5 rounded-xl transition text-center text-slate-600 hover:text-slate-900">
+                    <span id="tabLabelCoordinator">Care Coordinator</span>
+                </button>
+                <button onclick="switchRoleTab('manager')" id="tab-manager" class="role-tab py-2.5 rounded-xl transition text-center text-slate-600 hover:text-slate-900">
+                    <span id="tabLabelManager">Ops Manager</span>
+                </button>
+            </div>
+
+            <!-- Form Container -->
+            <form onsubmit="handleLoginSubmit(event)" class="space-y-4">
+                
+                <!-- Email / Password Group (For Coordinator & Ops Manager) -->
+                <div id="credFieldsGroup" class="space-y-3 hidden">
+                    <div>
+                        <label id="lblUsername" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Email or Username</label>
+                        <div class="relative">
+                            <i data-lucide="mail" class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400"></i>
+                            <input type="text" id="inputUsername" placeholder="coordinator@samarth.org" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white text-slate-800 transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label id="lblPassword" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Password</label>
+                        <div class="relative">
+                            <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400"></i>
+                            <input type="password" id="inputPassword" placeholder="••••••••" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white text-slate-800 transition">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile / OTP Group (For Senior / Family) -->
+                <div id="otpFieldsGroup" class="space-y-3">
+                    <div>
+                        <label id="lblMobile" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Registered Mobile Number</label>
+                        <div class="relative">
+                            <i data-lucide="phone" class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400"></i>
+                            <input type="tel" id="inputMobile" placeholder="+91 98765 43210" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white text-slate-800 transition">
+                        </div>
+                    </div>
+
+                    <div id="otpBox" class="hidden">
+                        <label id="lblOtp" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Enter 4-Digit OTP</label>
+                        <input type="text" maxlength="4" placeholder="1 2 3 4" class="w-full text-center tracking-widest text-lg font-bold py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-800">
+                    </div>
+
+                    <button type="button" id="btnGetOtp" onclick="triggerOtpSent()" class="w-full text-xs font-semibold text-teal-700 hover:text-teal-800 py-1 underline text-center block">
+                        Get OTP via SMS / Voice Call
+                    </button>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-xl text-xs shadow-lg shadow-teal-600/30 transition duration-200 flex items-center justify-center space-x-2 mt-2">
+                    <span id="btnSubmitText">Log In to Dashboard</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+            </form>
+
+            <div class="pt-2 text-center">
+                <span id="lblSecureBadge" class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-400">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i>
+                    <span>Encrypted & Privacy Compliant Senior Portal</span>
+                </span>
+            </div>
+
+        </div>
+</main>
+
+    <!-- FOOTER -->
+    <footer class="w-full py-4 text-center text-[11px] text-slate-400/80 border-t border-slate-800/40 bg-slate-900/40">
+        Samarth Life Management Pvt Ltd • Samarth Watch System • Supporting 40,000+ Seniors Across 350+ Cities
+    </footer>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl z-50 hidden flex items-center gap-3 text-xs border border-slate-800">
+        <i data-lucide="info" class="w-4 h-4 text-teal-400"></i>
+        <span id="toastMsg">Notification message</span>
+    </div>
+
+    <!-- JAVASCRIPT APP LOGIC -->
+    <script>
+        let currentRole = 'senior';
+        let currentLang = 'en';
+
+        const roleConfig = {
+            senior: {
+                name: "Ramesh Sharma",
+                badge: "Senior / Family Member",
+                titleEn: "Senior / Family Member",
+                titleHi: "वरिष्ठ नागरिक / परिवार",
+                descEn: "Simple, low-tech ways to report how you feel using Hindi or English voice check-ins or 1-tap responses. Families receive warm weekly summaries and critical alerts.",
+                descHi: "हिंदी या अंग्रेजी में वॉयस चेक-इन या 1-टैप जवाब का उपयोग करके अपनी स्थिति बताने का सरल तरीका। परिवारों को साप्ताहिक रिपोर्ट मिलती है।",
+                actions: [
+                    { icon: "mic", textEn: "Start Hindi Voice Check-In", textHi: "हिंदी वॉइस चेक-इन शुरू करें", toast: "Connecting to Samarth Watch Voice Check-in bot..." },
+                    { icon: "phone-incoming", textEn: "Trigger Missed Call Check-In", textHi: "मिस कॉल चेक-इन करें", toast: "Missed call check-in logged successfully!" },
+                    { icon: "heart", textEn: "View Weekly Family Summary", textHi: "साप्ताहिक परिवार सारांश देखें", toast: "Generating warm weekly family wellbeing report..." }
+                ]
+            },
+            coordinator: {
+                name: "Rajesh Kumar",
+                badge: "Care Coordinator",
+                titleEn: "Care Coordinator",
+                titleHi: "केयर कोऑर्डिनेटर",
+                descEn: "As a Care Coordinator, you oversee daily senior wellbeing. The AI system synthesizes structured vitals, medication logs, and Hinglish call notes into a ranked priority list with plain-language reasons and concrete next steps.",
+                descHi: "केयर कोऑर्डिनेटर के रूप में, आप दैनिक वरिष्ठ नागरिकों के स्वास्थ्य की निगरानी करते हैं। AI प्रणाली वाइटल्स, दवाओं के लॉग और हिंदी-अंग्रेजी कॉल नोट्स को प्राथमिकता सूची में व्यवस्थित करती है।",
+                actions: [
+                    { icon: "list-ordered", textEn: "View Today's Priority Seniors List", textHi: "आज की प्राथमिकता सूची देखें", toast: "Opening Coordinator Daily Priority List..." },
+                    { icon: "phone-call", textEn: "Initiate Urgent Check-In Calls", textHi: "अर्जेंट चेक-इन कॉल शुरू करें", toast: "Preparing priority call queue..." },
+                    { icon: "file-text", textEn: "Review Unstructured Call Notes", textHi: "कॉल नोट्स समीक्षा करें", toast: "Loading Hinglish NLP extracts..." }
+                ]
+            },
+            manager: {
+                name: "Ananya Sharma",
+                badge: "Operations Manager",
+                titleEn: "Operations Manager",
+                titleHi: "ऑपरेशंस मैनेजर",
+                descEn: "As an Operations Manager, you oversee team efficiency, city-wide alert volumes, coordinator response times, and model accuracy to prevent alert fatigue across regional teams.",
+                descHi: "ऑपरेशंस मैनेजर के रूप में, आप टीम की दक्षता, शहर-वार अलर्ट वॉल्यूम, प्रतिक्रिया समय और मॉडल सटीकता की निगरानी करते हैं।",
+                actions: [
+                    { icon: "line-chart", textEn: "Check City Alert Analytics", textHi: "शहर-वार एनालिटिक्स देखें", toast: "Loading City Alert Analytics Dashboard..." },
+                    { icon: "users", textEn: "Monitor Coordinator Workload", textHi: "कोऑर्डिनेटर कार्यभार देखें", toast: "Fetching regional team workload stats..." },
+                    { icon: "check-circle-2", textEn: "Review False Alarm Rates", textHi: "फॉल्स अलार्म दरें समीक्षा करें", toast: "Loading model precision metrics..." }
+                ]
+            }
+        };
+
+        window.onload = function() {
+            lucide.createIcons();
+        };
+
+        // Switch Role Tabs in Login Screen
+        function switchRoleTab(role) {
+            currentRole = role;
+
+            document.querySelectorAll('.role-tab').forEach(tab => {
+                tab.className = "role-tab py-2.5 rounded-xl transition text-center text-slate-600 hover:text-slate-900";
+            });
+            document.getElementById(`tab-${role}`).className = "role-tab py-2.5 rounded-xl transition text-center bg-teal-600 text-white shadow-sm font-bold";
+
+            const credGroup = document.getElementById('credFieldsGroup');
+            const otpGroup = document.getElementById('otpFieldsGroup');
+
+            if (role === 'senior') {
+                credGroup.classList.add('hidden');
+                otpGroup.classList.remove('hidden');
+                document.getElementById('inputUsername').required = false;
+                document.getElementById('inputPassword').required = false;
+            } else {
+                credGroup.classList.remove('hidden');
+                otpGroup.classList.add('hidden');
+                document.getElementById('inputUsername').required = true;
+                document.getElementById('inputPassword').required = true;
+            }
+        }
+
+        // Toggle Language (EN / HI)
+        function setLanguage(lang) {
+            currentLang = lang;
+            
+            document.getElementById('langEnBtn').className = lang === 'en' ? "px-3 py-1 rounded-lg transition bg-teal-600 text-white shadow-sm" : "px-3 py-1 rounded-lg transition text-slate-400 hover:text-white";
+            document.getElementById('langHiBtn').className = lang === 'hi' ? "px-3 py-1 rounded-lg transition bg-teal-600 text-white shadow-sm" : "px-3 py-1 rounded-lg transition text-slate-400 hover:text-white";
+
+            if (lang === 'hi') {
+                document.getElementById('lblLoginTitle').innerText = "पोर्टल साइन-इन";
+                document.getElementById('lblLoginSub').innerText = "वरिष्ठ नागरिकों की देखभाल के लिए अर्ली-वार्निंग सिस्टम";
+                document.getElementById('tabLabelSenior').innerText = "वरिष्ठ / परिवार";
+                document.getElementById('tabLabelCoordinator').innerText = "केयर कोऑर्डिनेटर";
+                document.getElementById('tabLabelManager').innerText = "ऑपरेशंस मैनेजर";
+                document.getElementById('lblUsername').innerText = "ईमेल या यूज़रनेम";
+                document.getElementById('lblPassword').innerText = "पासवर्ड";
+                document.getElementById('lblMobile').innerText = "पंजीकृत मोबाइल नंबर";
+                document.getElementById('btnGetOtp').innerText = "SMS / कॉल द्वारा OTP प्राप्त करें";
+                document.getElementById('btnSubmitText').innerText = "डैशबोर्ड में लॉग इन करें";
+                document.getElementById('lblLogoutText').innerText = "लॉगआउट / लॉगिन पर लौटें";
+            } else {
+                document.getElementById('lblLoginTitle').innerText = "Portal Sign-In";
+                document.getElementById('lblLoginSub').innerText = "Access early-warning wellbeing tools for senior care";
+                document.getElementById('tabLabelSenior').innerText = "Senior / Family";
+                document.getElementById('tabLabelCoordinator').innerText = "Care Coordinator";
+                document.getElementById('tabLabelManager').innerText = "Ops Manager";
+                document.getElementById('lblUsername').innerText = "Email or Username";
+                document.getElementById('lblPassword').innerText = "Password";
+                document.getElementById('lblMobile').innerText = "Registered Mobile Number";
+                document.getElementById('btnGetOtp').innerText = "Get OTP via SMS / Voice Call";
+                document.getElementById('btnSubmitText').innerText = "Log In to Dashboard";
+                document.getElementById('lblLogoutText').innerText = "Logout / Back to Login";
+            }
+        }
+
+        function triggerOtpSent() {
+            document.getElementById('otpBox').classList.remove('hidden');
+            showToast("OTP sent to your mobile number: 4321");
+        }
+
+        // Handle form submission without showing an intermediate welcome page.
+        function handleLoginSubmit(e) {
+            e.preventDefault();
+            showToast("Login submitted successfully.");
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+    </script>
+</body>
+</html>

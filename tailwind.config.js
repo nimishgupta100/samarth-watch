@@ -8,39 +8,37 @@ export default {
   theme: {
     extend: {
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+        // Primary design tokens (Samarth Watch design system)
+        forest: {
+          DEFAULT: "#1F4D3F",
+          dark: "#173B30",
+          light: "#2B6856",
         },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+        sage: {
+          DEFAULT: "#6E9A82",
+          light: "#A4C2B2",
+          dark: "#517764",
         },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+        mint: {
+          DEFAULT: "#EEF5F1",
+          deep: "#E2EEE7",
+          border: "#D5E4DB",
         },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+        cream: {
+          DEFAULT: "#FAFCFA",
+          pure: "#FFFFFF",
         },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+        ink: {
+          DEFAULT: "#14261F",
+          muted: "#4A5F55",
+          faint: "#73887E",
         },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+        alert: {
+          red: "#DC2626",
+          amber: "#B45309",
+          green: "#15803D",
         },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
-        },
+        // Legacy samarth.* tokens kept for backward compat
         samarth: {
           navy: "#0F2642",
           blue: "#1E4F8A",
@@ -51,16 +49,28 @@ export default {
           cream: "#FAF9F6",
           sand: "#F5F2EB",
           warmGray: "#64748B",
-        }
+        },
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        lg: "0.5rem",
+        xl: "0.75rem",
+        md: "0.375rem",
+        sm: "0.25rem",
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-      }
+        sans: ['"Plus Jakarta Sans"', '"Noto Sans Devanagari"', 'system-ui', 'sans-serif'],
+        hindi: ['"Noto Sans Devanagari"', '"Plus Jakarta Sans"', 'sans-serif'],
+      },
+      lineHeight: {
+        // Ensure Hindi Devanagari marks are not clipped
+        relaxed: '1.625',
+        loose: '2',
+      },
     },
   },
   plugins: [],

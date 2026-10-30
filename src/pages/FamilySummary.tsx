@@ -67,7 +67,7 @@ export const FamilySummary: React.FC = () => {
           <div className="flex items-center gap-2.5">
             <button
               onClick={toggleLanguage}
-              className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition-colors flex items-center gap-1.5 border border-slate-200"
+              className="px-3 py-1.5 min-h-[44px] rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition-colors flex items-center gap-1.5 border border-slate-200"
             >
               <Languages className="w-3.5 h-3.5" />
               <span>{lang === 'en' ? 'हिंदी में पढ़ें' : 'Read in English'}</span>

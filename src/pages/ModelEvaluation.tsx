@@ -8,7 +8,12 @@ import {
   ARCHITECTURE_STAGES, 
   COST_BREAKDOWN_10K, 
   LIMITATIONS 
-} from '../data/evaluationData';
+} from '../evaluation/evaluationData';
+import { 
+  COHORT_EVAL_METRICS, 
+  COHORT_SIZE, 
+  PLANTED_SCENARIO_COUNT 
+} from '../data/cohortDatabase';
 import { 
   ResponsiveContainer, 
   LineChart, 
@@ -42,7 +47,7 @@ export const ModelEvaluation: React.FC = () => {
     <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-8">
       
       {/* Header Banner (Solid Navy, NO purple gradients!) */}
-      <div className="bg-slate-900 text-white rounded-2xl p-6 sm:p-8 border border-slate-800 shadow-md">
+      <div className="bg-slate-900/80 backdrop-blur-md text-white rounded-3xl p-6 sm:p-8 border border-slate-800/80 shadow-2xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-1.5 bg-teal-500/20 text-teal-300 text-xs px-3 py-1 rounded-md border border-teal-400/30 font-semibold">
@@ -71,7 +76,7 @@ export const ModelEvaluation: React.FC = () => {
       </div>
 
       {/* SECTION 1: Model Comparison Benchmark Table */}
-      <div className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-2xs space-y-4">
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-slate-100/20 shadow-2xl space-y-4">
         <div>
           <h2 className="text-lg font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
             <Layers className="w-5 h-5 text-teal-700" />
@@ -136,7 +141,7 @@ export const ModelEvaluation: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* Precision-at-k Curve Chart */}
-        <div className="lg:col-span-7 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-2xs space-y-4">
+        <div className="lg:col-span-7 bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-slate-100/20 shadow-2xl space-y-4">
           <div>
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-teal-700" />
@@ -166,7 +171,7 @@ export const ModelEvaluation: React.FC = () => {
         </div>
 
         {/* Confusion Matrix on Planted Cases */}
-        <div className="lg:col-span-5 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-2xs space-y-4">
+        <div className="lg:col-span-5 bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-slate-100/20 shadow-2xl space-y-4">
           <div>
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-teal-700" />
@@ -217,12 +222,25 @@ export const ModelEvaluation: React.FC = () => {
               <div className="text-[10px] text-slate-500">Specificity</div>
             </div>
           </div>
+
+          {/* Live Cohort Evaluation Metric Banner */}
+          <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 text-xs space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-teal-900">Imported Cohort Run (N={COHORT_SIZE}):</span>
+              <span className="font-mono text-[11px] text-teal-800 font-semibold">
+                TP: {COHORT_EVAL_METRICS.tp} | FP: {COHORT_EVAL_METRICS.fp} | FN: {COHORT_EVAL_METRICS.fn} | TN: {COHORT_EVAL_METRICS.tn}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-600">
+              Evaluated strictly on 18,000 simulated observations and {PLANTED_SCENARIO_COUNT} synthetic decline trajectories without future data leakage. Not clinical validation.
+            </p>
+          </div>
         </div>
 
       </div>
 
       {/* SECTION 3: System Architecture Flow (Interactive, clean slate buttons) */}
-      <div className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-2xs space-y-6">
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-slate-100/20 shadow-2xl space-y-6">
         <div>
           <h2 className="text-lg font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
             <Cpu className="w-5 h-5 text-teal-700" />
@@ -254,7 +272,7 @@ export const ModelEvaluation: React.FC = () => {
           ))}
         </div>
 
-        <div className="p-6 bg-slate-900 text-white rounded-2xl border border-slate-800 space-y-3">
+        <div className="p-6 bg-slate-900/90 text-white rounded-2xl border border-slate-800 space-y-3">
           <div className="flex items-center justify-between text-xs">
             <span className="font-bold uppercase tracking-wider text-teal-400">
               Stage {ARCHITECTURE_STAGES[selectedArchStep].step} Specification
@@ -278,7 +296,7 @@ export const ModelEvaluation: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* Cost Analysis at 10k Scale */}
-        <div className="lg:col-span-7 bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-2xs space-y-4">
+        <div className="lg:col-span-7 bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-slate-100/20 shadow-2xl space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -320,7 +338,7 @@ export const ModelEvaluation: React.FC = () => {
         </div>
 
         {/* Limitations */}
-        <div className="lg:col-span-5 bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-2xs space-y-4">
+        <div className="lg:col-span-5 bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-slate-100/20 shadow-2xl space-y-4">
           <div>
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-500" />

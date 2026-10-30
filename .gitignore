@@ -22,3 +22,27 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Private demo accounts (never commit)
+docs/PRIVATE_ACCOUNTS.md
+
+# Android / Capacitor build artefacts (never commit)
+android/build/
+android/.gradle/
+android/app/build/
+android/local.properties
+
+# Keystores and signing files (NEVER commit)
+*.keystore
+*.jks
+*.p12
+
+# APK output folder — only the README and checksums are committed
+apk/*.apk
+apk/checksums.txt
+
+# Supabase scripts (contain keys — keep local only)
+scripts/uploadToSupabase.mjs

@@ -1,0 +1,114 @@
+{
+  "name": "Samarth Watch - Senior Monitoring & Triage Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "1e2f3a4b-0001-4000-8000-000000000001",
+      "name": "Daily Morning Schedule (08:00 IST)",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5173/api/seniors/cohort-summary",
+        "authentication": "genericCredentialType",
+        "options": {}
+      },
+      "id": "1e2f3a4b-0002-4000-8000-000000000002",
+      "name": "Fetch Cohort Baselines",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "model": "chat-model-indic",
+        "promptType": "define",
+        "text": "=You are the Samarth Watch AI Care Agent. You inspect daily observations against the senior's personal baseline. Never diagnose conditions. Flag significant drift from personal baseline and formulate a justified task for the human coordinator."
+      },
+      "id": "1e2f3a4b-0003-4000-8000-000000000003",
+      "name": "AI Triage Agent Node",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "name": "getSeniorObservations",
+        "description": "Fetches 14-day masked home observations (steps, HR, BP, meds). Never includes scenario labels or private data."
+      },
+      "id": "1e2f3a4b-0004-4000-8000-000000000004",
+      "name": "Tool: getSeniorObservations",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [880, 200]
+    },
+    {
+      "parameters": {
+        "name": "createCoordinatorTask",
+        "description": "Creates an idempotent, deduplicated task in the coordinator caseload with evidence justification."
+      },
+      "id": "1e2f3a4b-0005-4000-8000-000000000005",
+      "name": "Tool: createCoordinatorTask",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [880, 400]
+    }
+  ],
+  "connections": {
+    "Daily Morning Schedule (08:00 IST)": {
+      "main": [
+        [
+          {
+            "node": "Fetch Cohort Baselines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Cohort Baselines": {
+      "main": [
+        [
+          {
+            "node": "AI Triage Agent Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: getSeniorObservations": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Triage Agent Node",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: createCoordinatorTask": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Triage Agent Node",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

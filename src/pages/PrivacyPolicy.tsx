@@ -7,27 +7,26 @@ export const PrivacyPolicy: React.FC = () => {
   useDocumentTitle('Privacy Policy');
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      
-      <div>
-        <Link 
-          to="/" 
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-teal-700 transition-colors bg-white px-3 py-1.5 rounded-lg border border-slate-200"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
-        </Link>
-      </div>
+    <div className="min-h-dvh bg-mint text-ink font-sans py-8 px-4 sm:px-6 lg:px-8 pb-safe pt-safe">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div>
+          <Link 
+            to="/" 
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-forest hover:text-forest-dark transition-colors bg-cream px-3.5 py-2 rounded-lg border border-mint-border shadow-xs"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Home
+          </Link>
+        </div>
 
-      <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
-        
-        <div className="border-b border-slate-100 pb-5">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-700 mb-1">
-            <Lock className="w-3.5 h-3.5" />
-            <span>Digital Personal Data Protection (DPDP) Act 2023 Compliance</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Privacy Policy & Health Data Governance
-          </h1>
+        <div className="bg-cream rounded-xl p-6 sm:p-8 border border-mint-border shadow-xs space-y-6">
+          <div className="border-b border-mint-border pb-5">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-forest mb-1">
+              <Lock className="w-3.5 h-3.5" />
+              <span>Digital Personal Data Protection (DPDP) Act 2023 Compliance</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-forest tracking-tight">
+              Privacy Policy & Health Data Governance
+            </h1>
           <p className="text-xs text-slate-500 mt-1">
             Effective Date: October 29, 2026 • Version 2.4 • Applicable to Samarth Life Management Pvt Ltd
           </p>
@@ -101,5 +100,6 @@ export const PrivacyPolicy: React.FC = () => {
 
       </div>
     </div>
+  </div>
   );
 };

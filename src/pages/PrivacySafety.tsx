@@ -4,6 +4,7 @@ import { useToast } from '../context/ToastContext';
 import { 
   Lock, 
   ShieldCheck, 
+  ShieldAlert,
   Eye, 
   EyeOff, 
   UserCheck, 
@@ -17,12 +18,12 @@ export const PrivacySafety: React.FC = () => {
   const [isMasked, setIsMasked] = useState(true);
 
   const rawDataPayload = {
-    patientName: 'Smt. Kamala Devi (W/o Late Shri B. N. Sharma)',
+    patientName: 'Kamla',
     aadhaarNumber: 'XXXX-XXXX-8921',
-    mobileNumber: '+91 98711 00234',
-    homeAddress: 'House 412, Gomti Nagar Extension, Lucknow - 226010',
-    emergencyContact: 'Rohit Verma (Son, Gurgaon) - +91 98112 34567',
-    callTranscriptRaw: 'कमला जी (पता: गोमती नगर, लखनऊ, फोन 9871100234) ने बताया कि कल रात उनके दामाद रोहित वर्मा का फोन आया था। आज सुबह 10 बजे बीपी 154/92 आया और सर घूम रहा था।'
+    mobileNumber: '+91 74520 09877',
+    homeAddress: 'Kothrud, Pune - 411038',
+    emergencyContact: 'Karishma (Family member) - +91 87657 89433',
+    callTranscriptRaw: 'कमला जी (फोन 7452009877) ने बताया कि कल रात उनके परिवार का फोन आया था। आज सुबह सब ठीक है।'
   };
 
   const maskedDataPayload = {
@@ -86,7 +87,7 @@ export const PrivacySafety: React.FC = () => {
     <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-8">
       
       {/* Header */}
-      <div className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-2xs">
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-slate-100/20 shadow-2xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
@@ -109,7 +110,7 @@ export const PrivacySafety: React.FC = () => {
       </div>
 
       {/* SECTION 1: Interactive Data Masking Demonstration */}
-      <div className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-2xs space-y-4">
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-slate-100/20 shadow-2xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div>
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -123,7 +124,7 @@ export const PrivacySafety: React.FC = () => {
 
           <button
             onClick={toggleMasking}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 shadow-2xs ${
+            className={`px-4 py-2 min-h-[44px] rounded-lg text-xs font-bold transition-all flex items-center gap-2 shadow-2xs ${
               isMasked
                 ? 'bg-emerald-700 text-white'
                 : 'bg-red-700 text-white'
@@ -179,7 +180,7 @@ export const PrivacySafety: React.FC = () => {
       </div>
 
       {/* SECTION 2: Role-Based Access Control (RBAC) Matrix */}
-      <div className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-2xs space-y-4">
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-slate-100/20 shadow-2xl space-y-4">
         <div>
           <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
             <UserCheck className="w-4 h-4 text-teal-700" />
@@ -258,8 +259,19 @@ export const PrivacySafety: React.FC = () => {
         </div>
       </div>
 
+      {/* SECTION 3: Emergency SOS Consent Bypass Policy (Change 3) */}
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 border-2 border-amber-400 shadow-2xl space-y-2">
+        <h3 className="text-sm font-bold text-amber-950 flex items-center gap-2">
+          <ShieldAlert className="w-4 h-4 text-amber-700" />
+          Emergency SOS Safety Override Rule (DPDP Act 2023 Medical Emergency Clause)
+        </h3>
+        <p className="text-xs text-amber-900 leading-relaxed">
+          When a senior activates the SOS assistance trigger, the alert bypasses routine family sharing consent settings so linked family members and the Care Coordinator are notified in parallel. In strict accordance with privacy principles, the SOS payload contains only the factual incident trigger, timestamp, and response status. It never includes diagnostic health details, personal call recordings, or vitals history.
+        </p>
+      </div>
+
       {/* SECTION 3: Senior-First Consent Lifecycle Flow */}
-      <div className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-2xs space-y-4">
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-slate-100/20 shadow-2xl space-y-4">
         <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-emerald-600" />
           Senior Consent Lifecycle Protocol
@@ -284,6 +296,63 @@ export const PrivacySafety: React.FC = () => {
             <div className="font-bold text-slate-900 text-sm">3. Zero Medical Labeling</div>
             <p className="text-slate-600 leading-relaxed">
               No family member ever receives medical jargon (such as "hypertensive crisis" or "dementia"). Messages focus strictly on human comfort and social presence.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION 4: Wearable Device Pipeline Limits & Privacy Safeguards */}
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-slate-100/20 shadow-2xl space-y-4">
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-600">
+          <Lock className="w-3.5 h-3.5 text-brand" />
+          <span>Wearable Pipeline Architecture & Limits</span>
+        </div>
+        <h3 className="text-base sm:text-lg font-bold text-slate-900">
+          Device Data Collection Limits & Non-Diagnostic Guarantee
+        </h3>
+        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+          Samarth Watch prioritizes elderly dignity and peace of mind over panic. The wearable pipeline adheres to strict technical and privacy guardrails:
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs pt-2">
+          <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 space-y-1.5">
+            <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              What the Pipeline Collects
+            </div>
+            <p className="text-slate-600 leading-relaxed">
+              Heart rate, oxygen saturation (SpO2), step counts, battery status, and emergency triggers (falls, SOS button) via open standard Bluetooth GATT or trusted companion apps.
+            </p>
+          </div>
+
+          <div className="p-4 bg-red-50/50 rounded-2xl border border-red-100 space-y-1.5">
+            <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+              <XCircle className="w-4 h-4 text-red-500" />
+              What We Never Collect
+            </div>
+            <p className="text-slate-600 leading-relaxed">
+              Zero continuous GPS or ambient audio recording. Vitals are not sold to third-party insurers or advertisers, and data retention is strictly limited to 90 days.
+            </p>
+          </div>
+
+          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <div className="font-bold text-slate-900 text-sm">Browser & Device Reality</div>
+            <p className="text-slate-600 leading-relaxed">
+              Web Bluetooth functions in supported Chromium browsers on Android/Desktop with standard GATT profiles. Proprietary watches (Apple Watch, Fitbit, Oura) require mobile companion apps or vendor cloud OAuth in production.
+            </p>
+          </div>
+
+          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <div className="font-bold text-slate-900 text-sm">Calm Family Presentation</div>
+            <p className="text-slate-600 leading-relaxed">
+              Raw erratic waveforms and single-point outliers are filtered out. Family members see reassuring natural language summaries instead of alarming clinical fluctuations.
+            </p>
+          </div>
+
+          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5 md:col-span-2">
+            <div className="font-bold text-slate-900 text-sm">Map Tiles & OpenStreetMap Notice</div>
+            <p className="text-slate-600 leading-relaxed">
+              Location maps render using OpenStreetMap tiles. Standard public tile requests transmit requested bounding area to the OSM Foundation servers. Production deployments require a dedicated or self-hosted tile provider. Continuous background location tracking is not supported by standard web applications.
             </p>
           </div>
         </div>

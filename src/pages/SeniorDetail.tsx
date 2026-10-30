@@ -28,15 +28,34 @@ import {
   Heart, 
   Languages, 
   ChevronRight,
+  Play,
+  Mic,
+  Wifi,
+  AlertTriangle,
 } from 'lucide-react';
 import { CueTag } from '../types';
 
 export const SeniorDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { seniors, toggleConsent, handleAlertAction } = useApp();
+  const {
+    seniors,
+    toggleConsent,
+    handleAlertAction,
+    voiceNotes,
+    wearableConnected,
+    wearableReadings,
+    connectWearable,
+    disconnectWearable,
+    injectWearableScenario,
+  } = useApp();
   const { showToast } = useToast();
 
   const senior = seniors.find(s => s.id === id) || seniors[0];
+  const history90Days = senior.history90Days || [];
+  const recommendedScript = senior.recommendedScript || {
+    hindi: `नमस्ते ${senior.name} जी! आशा है आप कुशल हैं।`,
+    english: `Good day ${senior.name}! Calling to check in on you.`
+  };
   useDocumentTitle(`${senior.name} - Baseline & Triage`);
 
   const [activeTab, setActiveTab] = useState<'overview' | 'vitals' | 'medication' | 'calls' | 'timeline'>('overview');
@@ -45,9 +64,24 @@ export const SeniorDetail: React.FC = () => {
   const [showEnglishTranslation, setShowEnglishTranslation] = useState(false);
   const [vitalsRange, setVitalsRange] = useState<14 | 30 | 90>(30);
   const [selectedVital, setSelectedVital] = useState<'bp' | 'sugar' | 'spo2' | 'weight'>('bp');
+  const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+
+  const handlePlayVoiceNote = (noteId: string, audioBlobUrl?: string) => {
+    if (audioBlobUrl) {
+      const audio = new Audio(audioBlobUrl);
+      setPlayingAudioId(noteId);
+      audio.onended = () => setPlayingAudioId(null);
+      audio.onerror = () => setPlayingAudioId(null);
+      audio.play().catch(() => setPlayingAudioId(null));
+    } else {
+      showToast('Playing simulated recording.', 'info');
+      setPlayingAudioId(noteId);
+      setTimeout(() => setPlayingAudioId(null), 2500);
+    }
+  };
 
   const copyScriptToClipboard = () => {
-    const text = scriptLang === 'hindi' ? senior.recommendedScript.hindi : senior.recommendedScript.english;
+    const text = scriptLang === 'hindi' ? recommendedScript.hindi : recommendedScript.english;
     navigator.clipboard.writeText(text);
     setCopiedScript(true);
     showToast('Call script copied to clipboard', 'success');
@@ -67,6 +101,9 @@ export const SeniorDetail: React.FC = () => {
 
   // Vitals data mapped for Recharts with the senior's OWN baseline band
   const vitalsChartData = useMemo(() => {
+    if (!senior.baseline || !senior.history90Days || senior.history90Days.length === 0) {
+      return [];
+    }
     const sliceDays = senior.history90Days.slice(-vitalsRange);
     const b = senior.baseline;
 
@@ -97,7 +134,13 @@ export const SeniorDetail: React.FC = () => {
 
   // "Why this score" additive horizontal data (Clean clinical colors, zero purple)
   const scoreBreakdownData = useMemo(() => {
-    const bd = senior.scoreBreakdown;
+    const bd = senior.scoreBreakdown || {
+      vitalsDeviation: 0,
+      nlpCallCues: 0,
+      medicationAdherence: 0,
+      silencePattern: 0,
+      trendAcceleration: 0
+    };
     return [
       { name: 'Personal Baseline Vitals Shift', value: bd.vitalsDeviation, fill: '#DC2626' },
       { name: 'Indic NLP Call Sentiment / Cues', value: bd.nlpCallCues, fill: '#EA580C' },
@@ -140,7 +183,7 @@ export const SeniorDetail: React.FC = () => {
       {/* Back button */}
       <div>
         <Link 
-          to="/"
+          to="/coordinator"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-teal-700 transition-colors bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Back to Today's Priorities
@@ -279,7 +322,7 @@ export const SeniorDetail: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-3.5 py-2 rounded-lg transition-all flex items-center gap-2 whitespace-nowrap ${
+                className={`min-h-[44px] px-3.5 py-2 rounded-lg transition-all flex items-center gap-2 whitespace-nowrap ${
                   isActive
                     ? 'bg-slate-900 text-white font-bold'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -364,7 +407,7 @@ export const SeniorDetail: React.FC = () => {
                 <div className="flex items-center gap-2 mb-3">
                   <button
                     onClick={() => setScriptLang('hindi')}
-                    className={`px-3 py-1 rounded-md text-xs font-bold transition-colors ${
+                    className={`min-h-[40px] px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
                       scriptLang === 'hindi'
                         ? 'bg-teal-700 text-white'
                         : 'bg-white/10 text-slate-300 hover:bg-white/20'
@@ -374,7 +417,7 @@ export const SeniorDetail: React.FC = () => {
                   </button>
                   <button
                     onClick={() => setScriptLang('english')}
-                    className={`px-3 py-1 rounded-md text-xs font-bold transition-colors ${
+                    className={`min-h-[40px] px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
                       scriptLang === 'english'
                         ? 'bg-teal-700 text-white'
                         : 'bg-white/10 text-slate-300 hover:bg-white/20'
@@ -386,7 +429,7 @@ export const SeniorDetail: React.FC = () => {
 
                 {/* Script Box */}
                 <div className="bg-slate-800 rounded-xl p-4 border border-slate-700 text-sm leading-relaxed font-hindi">
-                  {scriptLang === 'hindi' ? senior.recommendedScript.hindi : senior.recommendedScript.english}
+                  {scriptLang === 'hindi' ? recommendedScript.hindi : recommendedScript.english}
                 </div>
               </div>
 
@@ -394,7 +437,7 @@ export const SeniorDetail: React.FC = () => {
               <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-slate-800">
                 <button
                   onClick={copyScriptToClipboard}
-                  className="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white transition-colors flex items-center gap-1.5 border border-slate-700"
+                  className={`min-h-[40px] px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white transition-colors flex items-center gap-1.5 border border-slate-700`}
                 >
                   {copiedScript ? <Check className="w-3.5 h-3.5 text-teal-400" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copiedScript ? 'Copied Script!' : 'Copy Script'}</span>
@@ -431,48 +474,54 @@ export const SeniorDetail: React.FC = () => {
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                  <div className="text-[11px] font-semibold text-slate-500">Blood Pressure</div>
-                  <div className="text-base font-extrabold text-slate-900 mt-1">
-                    {senior.history90Days[senior.history90Days.length - 1].vitals.systolicBp}/
-                    {senior.history90Days[senior.history90Days.length - 1].vitals.diastolicBp}
+              {senior.history90Days && senior.history90Days.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <div className="text-[11px] font-semibold text-slate-500">Blood Pressure</div>
+                    <div className="text-base font-extrabold text-slate-900 mt-1">
+                      {senior.history90Days[senior.history90Days.length - 1].vitals.systolicBp}/
+                      {senior.history90Days[senior.history90Days.length - 1].vitals.diastolicBp}
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">
+                      Baseline: {senior.baseline ? `${senior.baseline.systolicBp}/${senior.baseline.diastolicBp}` : 'Not added yet'}
+                    </div>
                   </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">
-                    Baseline: {senior.baseline.systolicBp}/{senior.baseline.diastolicBp}
-                  </div>
-                </div>
 
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                  <div className="text-[11px] font-semibold text-slate-500">Fasting Sugar</div>
-                  <div className="text-base font-extrabold text-slate-900 mt-1">
-                    {senior.history90Days[senior.history90Days.length - 1].vitals.fastingSugar} <span className="text-[11px] font-normal">mg/dL</span>
+                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <div className="text-[11px] font-semibold text-slate-500">Fasting Sugar</div>
+                    <div className="text-base font-extrabold text-slate-900 mt-1">
+                      {senior.history90Days[senior.history90Days.length - 1].vitals.fastingSugar} <span className="text-[11px] font-normal">mg/dL</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">
+                      Baseline: {senior.baseline ? `${senior.baseline.fastingSugar} mg/dL` : 'Not added yet'}
+                    </div>
                   </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">
-                    Baseline: {senior.baseline.fastingSugar}
-                  </div>
-                </div>
 
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                  <div className="text-[11px] font-semibold text-slate-500">SpO2 Oxygen</div>
-                  <div className="text-base font-extrabold text-slate-900 mt-1">
-                    {senior.history90Days[senior.history90Days.length - 1].vitals.spo2}%
+                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <div className="text-[11px] font-semibold text-slate-500">SpO2 Oxygen</div>
+                    <div className="text-base font-extrabold text-slate-900 mt-1">
+                      {senior.history90Days[senior.history90Days.length - 1].vitals.spo2}%
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">
+                      Baseline: {senior.baseline ? `${senior.baseline.spo2}%` : 'Not added yet'}
+                    </div>
                   </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">
-                    Baseline: {senior.baseline.spo2}%
-                  </div>
-                </div>
 
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                  <div className="text-[11px] font-semibold text-slate-500">Weight</div>
-                  <div className="text-base font-extrabold text-slate-900 mt-1">
-                    {senior.history90Days[senior.history90Days.length - 1].vitals.weight} <span className="text-[11px] font-normal">kg</span>
-                  </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">
-                    Baseline: {senior.baseline.weight} kg
+                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <div className="text-[11px] font-semibold text-slate-500">Weight</div>
+                    <div className="text-base font-extrabold text-slate-900 mt-1">
+                      {senior.history90Days[senior.history90Days.length - 1].vitals.weight} <span className="text-[11px] font-normal">kg</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">
+                      Baseline: {senior.baseline ? `${senior.baseline.weight} kg` : 'Not added yet'}
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center text-xs text-slate-600">
+                  No vitals readings recorded yet. Baseline not established.
+                </div>
+              )}
             </div>
 
             {/* Latest Call Note Card */}
@@ -490,7 +539,7 @@ export const SeniorDetail: React.FC = () => {
                 </button>
               </div>
 
-              {senior.history90Days[senior.history90Days.length - 1].callNote ? (
+              {senior.history90Days && senior.history90Days.length > 0 && senior.history90Days[senior.history90Days.length - 1].callNote ? (
                 <div className="space-y-3">
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs font-hindi text-slate-800 leading-relaxed">
                     "{senior.history90Days[senior.history90Days.length - 1].callNote?.originalText}"
@@ -563,172 +612,303 @@ export const SeniorDetail: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {[
-              { id: 'bp', label: `Blood Pressure (${senior.baseline.systolicBp}/${senior.baseline.diastolicBp} mmHg baseline)` },
-              { id: 'sugar', label: `Fasting Blood Glucose (${senior.baseline.fastingSugar} mg/dL baseline)` },
-              { id: 'spo2', label: `Pulse Oximetry SpO2 (${senior.baseline.spo2}% baseline)` },
-              { id: 'weight', label: `Body Weight (${senior.baseline.weight} kg baseline)` },
-            ].map(v => (
-              <button
-                key={v.id}
-                onClick={() => setSelectedVital(v.id as any)}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-                  selectedVital === v.id
-                    ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                }`}
-              >
-                {v.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="h-72 w-full pt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={vitalsChartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                <YAxis 
-                  domain={
-                    selectedVital === 'bp' 
-                      ? [100, 180] 
-                      : selectedVital === 'sugar' 
-                        ? [80, 220] 
-                        : selectedVital === 'spo2'
-                          ? [88, 100]
-                          : [45, 90]
-                  } 
-                  tick={{ fontSize: 11 }} 
-                />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0].payload;
-                      return (
-                        <div className="bg-slate-900 text-white p-3 rounded-xl shadow-lg text-xs space-y-1">
-                          <div className="font-bold border-b border-slate-700 pb-1">{data.fullDate}</div>
-                          {selectedVital === 'bp' && (
-                            <>
-                              <div className="text-red-300 font-bold">Systolic: {data.systolic} mmHg</div>
-                              <div className="text-slate-300">Diastolic: {data.diastolic} mmHg</div>
-                              <div className="text-teal-300">Baseline Mean: {data.sysBaseline} mmHg</div>
-                              <div className="text-slate-400">Normal Band: {data.sysLower} - {data.sysUpper} mmHg</div>
-                            </>
-                          )}
-                          {selectedVital === 'sugar' && (
-                            <>
-                              <div className="text-amber-300 font-bold">Sugar: {data.sugar} mg/dL</div>
-                              <div className="text-teal-300">Baseline Mean: {senior.baseline.fastingSugar} mg/dL</div>
-                              <div className="text-slate-400">Normal Band: {data.sugarLower} - {data.sugarUpper} mg/dL</div>
-                            </>
-                          )}
-                          {selectedVital === 'spo2' && (
-                            <>
-                              <div className="text-blue-300 font-bold">SpO2: {data.spo2}%</div>
-                              <div className="text-teal-300">Baseline: {data.spo2Baseline}%</div>
-                            </>
-                          )}
-                          {selectedVital === 'weight' && (
-                            <>
-                              <div className="text-slate-200 font-bold">Weight: {data.weight} kg</div>
-                              <div className="text-teal-300">Baseline: {senior.baseline.weight} kg</div>
-                            </>
-                          )}
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-
-                {selectedVital === 'bp' && (
-                  <>
-                    <Area
-                      type="monotone"
-                      dataKey="sysUpper"
-                      stroke="none"
-                      fill="#0D9488"
-                      fillOpacity={0.15}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="sysBaseline"
-                      stroke="#0D9488"
-                      strokeDasharray="4 4"
-                      strokeWidth={1.8}
-                      dot={false}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="systolic"
-                      stroke="#DC2626"
-                      strokeWidth={2.5}
-                      dot={{ r: 3.5, fill: '#DC2626' }}
-                    />
-                  </>
-                )}
-
-                {selectedVital === 'sugar' && (
-                  <>
-                    <Area
-                      type="monotone"
-                      dataKey="sugarUpper"
-                      stroke="none"
-                      fill="#D97706"
-                      fillOpacity={0.18}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="sugar"
-                      stroke="#D97706"
-                      strokeWidth={2.5}
-                      dot={{ r: 3.5, fill: '#D97706' }}
-                    />
-                  </>
-                )}
-
-                {selectedVital === 'spo2' && (
-                  <Line
-                    type="monotone"
-                    dataKey="spo2"
-                    stroke="#2563EB"
-                    strokeWidth={2.5}
-                    dot={{ r: 3.5, fill: '#2563EB' }}
-                  />
-                )}
-
-                {selectedVital === 'weight' && (
-                  <>
-                    <Area
-                      type="monotone"
-                      dataKey="weightUpper"
-                      stroke="none"
-                      fill="#475569"
-                      fillOpacity={0.15}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="weight"
-                      stroke="#0D9488"
-                      strokeWidth={2.5}
-                      dot={{ r: 3.5, fill: '#0D9488' }}
-                    />
-                  </>
-                )}
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-sm bg-red-600 inline-block" /> Actual Measurement
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-sm bg-teal-500/30 border border-teal-600 inline-block" /> Shaded: Senior's Personal Baseline Band
-              </span>
+          {!senior.baseline ? (
+            <div className="p-8 text-center bg-slate-50 rounded-xl border border-slate-200">
+              <p className="text-sm font-semibold text-slate-700">Baseline not established yet</p>
+              <p className="text-xs text-slate-500 mt-1">
+                Personalized baseline trajectory and charts will appear here as health readings are logged.
+              </p>
             </div>
-            <span>Rolling Z-score deviations (N=30)</span>
+          ) : (
+            <>
+              <div className="flex flex-wrap items-center gap-2">
+                {[
+                  { id: 'bp', label: `Blood Pressure (${senior.baseline.systolicBp}/${senior.baseline.diastolicBp} mmHg baseline)` },
+                  { id: 'sugar', label: `Fasting Blood Glucose (${senior.baseline.fastingSugar} mg/dL baseline)` },
+                  { id: 'spo2', label: `Pulse Oximetry SpO2 (${senior.baseline.spo2}% baseline)` },
+                  { id: 'weight', label: `Body Weight (${senior.baseline.weight} kg baseline)` },
+                ].map(v => (
+                  <button
+                    key={v.id}
+                    onClick={() => setSelectedVital(v.id as any)}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                      selectedVital === v.id
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    {v.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="h-72 w-full pt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={vitalsChartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                    <YAxis 
+                      domain={
+                        selectedVital === 'bp' 
+                          ? [100, 180] 
+                          : selectedVital === 'sugar' 
+                            ? [80, 220] 
+                            : selectedVital === 'spo2'
+                              ? [88, 100]
+                              : [45, 90]
+                      } 
+                      tick={{ fontSize: 11 }} 
+                    />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-slate-900 text-white p-3 rounded-xl shadow-lg text-xs space-y-1">
+                              <div className="font-bold border-b border-slate-700 pb-1">{data.fullDate}</div>
+                              {selectedVital === 'bp' && (
+                                <>
+                                  <div className="text-red-300 font-bold">Systolic: {data.systolic} mmHg</div>
+                                  <div className="text-slate-300">Diastolic: {data.diastolic} mmHg</div>
+                                  <div className="text-teal-300">Baseline Mean: {data.sysBaseline} mmHg</div>
+                                  <div className="text-slate-400">Normal Band: {data.sysLower} - {data.sysUpper} mmHg</div>
+                                </>
+                              )}
+                              {selectedVital === 'sugar' && (
+                                <>
+                                  <div className="text-amber-300 font-bold">Sugar: {data.sugar} mg/dL</div>
+                                  <div className="text-teal-300">Baseline Mean: {senior.baseline?.fastingSugar} mg/dL</div>
+                                  <div className="text-slate-400">Normal Band: {data.sugarLower} - {data.sugarUpper} mg/dL</div>
+                                </>
+                              )}
+                              {selectedVital === 'spo2' && (
+                                <>
+                                  <div className="text-blue-300 font-bold">SpO2: {data.spo2}%</div>
+                                  <div className="text-teal-300">Baseline: {data.spo2Baseline}%</div>
+                                </>
+                              )}
+                              {selectedVital === 'weight' && (
+                                <>
+                                  <div className="text-slate-200 font-bold">Weight: {data.weight} kg</div>
+                                  <div className="text-teal-300">Baseline: {senior.baseline?.weight} kg</div>
+                                </>
+                              )}
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+
+                    {selectedVital === 'bp' && (
+                      <>
+                        <Area
+                          type="monotone"
+                          dataKey="sysUpper"
+                          stroke="none"
+                          fill="#0D9488"
+                          fillOpacity={0.15}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="sysBaseline"
+                          stroke="#0D9488"
+                          strokeDasharray="4 4"
+                          strokeWidth={1.8}
+                          dot={false}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="systolic"
+                          stroke="#DC2626"
+                          strokeWidth={2.5}
+                          dot={{ r: 3.5, fill: '#DC2626' }}
+                        />
+                      </>
+                    )}
+
+                    {selectedVital === 'sugar' && (
+                      <>
+                        <Area
+                          type="monotone"
+                          dataKey="sugarUpper"
+                          stroke="none"
+                          fill="#D97706"
+                          fillOpacity={0.18}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="sugar"
+                          stroke="#D97706"
+                          strokeWidth={2.5}
+                          dot={{ r: 3.5, fill: '#D97706' }}
+                        />
+                      </>
+                    )}
+
+                    {selectedVital === 'spo2' && (
+                      <Line
+                        type="monotone"
+                        dataKey="spo2"
+                        stroke="#2563EB"
+                        strokeWidth={2.5}
+                        dot={{ r: 3.5, fill: '#2563EB' }}
+                      />
+                    )}
+
+                    {selectedVital === 'weight' && (
+                      <>
+                        <Area
+                          type="monotone"
+                          dataKey="weightUpper"
+                          stroke="none"
+                          fill="#475569"
+                          fillOpacity={0.15}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="weight"
+                          stroke="#0D9488"
+                          strokeWidth={2.5}
+                          dot={{ r: 3.5, fill: '#0D9488' }}
+                        />
+                      </>
+                    )}
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+                <div className="flex items-center gap-4">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-sm bg-red-600 inline-block" /> Actual Measurement
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-sm bg-teal-500/30 border border-teal-600 inline-block" /> Shaded: Senior's Personal Baseline Band
+                  </span>
+                </div>
+                <span>Rolling Z-score deviations (N=30)</span>
+              </div>
+            </>
+          )}
+
+          {/* WEARABLE & SMART BAND CONTINUOUS TELEMETRY (Change 4) */}
+          <div className="p-5 rounded-xl border border-slate-200 bg-slate-50 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-3 h-3 rounded-full ${wearableConnected ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Wifi className="w-4 h-4 text-teal-700" />
+                    Wearable Device Telemetry : Samarth Demo Band
+                  </h3>
+                  <span className="text-[11px] text-slate-500">
+                    Status: {wearableConnected ? 'Connected & Streaming (simulated 30s intervals)' : 'Disconnected (Bluetooth standby)'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (wearableConnected) {
+                      disconnectWearable();
+                      showToast('Wearable simulator disconnected.', 'info');
+                    } else {
+                      connectWearable();
+                      showToast('Wearable simulator connected. Streaming telemetry.', 'success');
+                    }
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                    wearableConnected
+                      ? 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
+                      : 'bg-teal-700 border-teal-700 text-white hover:bg-teal-800'
+                  }`}
+                >
+                  {wearableConnected ? 'Disconnect Band' : 'Connect Demo Band'}
+                </button>
+              </div>
+            </div>
+
+            {/* Simulated Scenario Injectors (Demo Controls) */}
+            <div className="space-y-2 pt-2 border-t border-slate-200">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                Clinical Simulation Scenarios (Prototype Testing)
+              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!wearableConnected) connectWearable();
+                    injectWearableScenario('rising_hr');
+                    showToast('Injected scenario: Rising Heart Rate (>130 bpm).', 'info');
+                  }}
+                  className="px-2.5 py-1 text-xs font-semibold rounded bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200"
+                >
+                  Simulate Tachycardia (&gt;130 bpm)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!wearableConnected) connectWearable();
+                    injectWearableScenario('low_spo2');
+                    showToast('Injected scenario: Low SpO2 (&lt;90%).', 'info');
+                  }}
+                  className="px-2.5 py-1 text-xs font-semibold rounded bg-blue-100 text-blue-900 border border-blue-300 hover:bg-blue-200"
+                >
+                  Simulate Hypoxia (&lt;90% SpO2)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!wearableConnected) connectWearable();
+                    injectWearableScenario('fall');
+                    showToast('Injected scenario: Resident Fall Detected!', 'error');
+                  }}
+                  className="px-2.5 py-1 text-xs font-semibold rounded bg-red-100 text-red-900 border border-red-300 hover:bg-red-200"
+                >
+                  Simulate Fall Event
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!wearableConnected) connectWearable();
+                    injectWearableScenario('device_sos');
+                    showToast('Injected scenario: Smartwatch SOS Button Pressed!', 'error');
+                  }}
+                  className="px-2.5 py-1 text-xs font-semibold rounded bg-red-100 text-red-900 border border-red-300 hover:bg-red-200"
+                >
+                  Simulate Smartwatch SOS
+                </button>
+              </div>
+            </div>
+
+            {/* Latest Readings Stream */}
+            {wearableReadings.length > 0 && (
+              <div className="space-y-1.5 pt-2">
+                <span className="text-[11px] font-bold text-slate-600 block">
+                  Latest Wearable Telemetry Readings (Browser Local Simulation):
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {wearableReadings.slice(0, 4).map((r) => (
+                    <div
+                      key={r.id}
+                      className="p-2.5 rounded-lg bg-white border border-slate-200 text-xs"
+                    >
+                      <span className="text-[10px] uppercase font-bold text-slate-500 block">
+                        {r.type.replace('_', ' ')}
+                      </span>
+                      <span className="text-base font-extrabold text-slate-900 mt-0.5 block">
+                        {r.value} {r.unit}
+                      </span>
+                      <span className="text-[10px] text-slate-400 block">
+                        {new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
         </div>
@@ -762,7 +942,7 @@ export const SeniorDetail: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-10 sm:grid-cols-15 md:grid-cols-18 gap-2 p-4 bg-slate-50 rounded-2xl border border-slate-200">
-            {senior.history90Days.map((d, idx) => {
+            {history90Days.map((d, idx) => {
               const rate = d.medication.adherenceRate;
               const bg = rate === 1.0 ? 'bg-emerald-600 hover:bg-emerald-700' : rate >= 0.5 ? 'bg-amber-500 hover:bg-amber-600' : 'bg-red-600 hover:bg-red-700';
               return (
@@ -783,12 +963,12 @@ export const SeniorDetail: React.FC = () => {
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {senior.history90Days.slice(-14).filter(d => d.medication.missedDoses.length > 0).length === 0 ? (
+              {history90Days.slice(-14).filter(d => d.medication.missedDoses.length > 0).length === 0 ? (
                 <div className="text-xs text-slate-500 italic p-3 bg-slate-50 rounded-xl">
                   No missed medications logged in the past 14 days. Adherence is optimal.
                 </div>
               ) : (
-                senior.history90Days.slice(-14).filter(d => d.medication.missedDoses.length > 0).map((d, mIdx) => (
+                history90Days.slice(-14).filter(d => d.medication.missedDoses.length > 0).map((d, mIdx) => (
                   <div key={mIdx} className="p-3 bg-red-50 rounded-xl border border-red-200 text-xs">
                     <div className="flex items-center justify-between font-bold text-red-950 mb-1">
                       <span>{d.date}</span>
@@ -840,8 +1020,113 @@ export const SeniorDetail: React.FC = () => {
             </button>
           </div>
 
+          {/* SENIOR INBOUND VOICE CHECK-IN INBOX (Change 1) */}
+          <div className="space-y-3 pb-5 border-b border-slate-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                <Mic className="w-4 h-4 text-teal-700" />
+                Senior Voice Notes (Routed to Assigned Coordinator Only)
+              </h3>
+              <span className="text-xs text-slate-500">
+                Coordinator: <strong>{senior.assignedCoordinatorName}</strong>
+              </span>
+            </div>
+
+            {voiceNotes.filter((vn) => vn.seniorId === senior.id && vn.coordinatorId === senior.assignedCoordinatorId).length === 0 ? (
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-500 italic">
+                No voice check-in recordings from this resident yet.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {voiceNotes
+                  .filter((vn) => vn.seniorId === senior.id && vn.coordinatorId === senior.assignedCoordinatorId)
+                  .map((vn) => (
+                    <div
+                      key={vn.id}
+                      className={`p-4 rounded-xl border space-y-2.5 transition-all ${
+                        vn.isHighPriority
+                          ? 'bg-red-50/70 border-red-300'
+                          : 'bg-teal-50/40 border-teal-200'
+                      }`}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="font-bold text-slate-900">
+                            {new Date(vn.timestamp).toLocaleDateString()} at{' '}
+                            {new Date(vn.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <span className="text-slate-400">:</span>
+                          <span className="text-slate-500">{vn.durationSeconds}s audio recording</span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {vn.isHighPriority ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-300">
+                              <AlertTriangle className="w-3 h-3 text-red-600" />
+                              Urgent Voice Note
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded bg-teal-100 text-teal-800 border border-teal-300">
+                              Routine Voice Note
+                            </span>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => handlePlayVoiceNote(vn.id, vn.audioBlobUrl)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold transition-colors"
+                          >
+                            <Play className="w-3.5 h-3.5" />
+                            <span>{playingAudioId === vn.id ? 'Playing...' : 'Play Audio'}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Plain-language Summary */}
+                      <div className="p-3 bg-white rounded-lg border border-slate-200 text-xs text-slate-900 leading-relaxed">
+                        <strong className="text-slate-800">Coordinator Summary:</strong> {vn.plainSummary}
+                      </div>
+
+                      {/* Extracted Cues with severity */}
+                      {vn.extractedCues && vn.extractedCues.length > 0 && (
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                            Extracted Health Cues (Coordinator Triage):
+                          </span>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {vn.extractedCues.map((cue, idx) => (
+                              <span
+                                key={idx}
+                                className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded border ${
+                                  cue.severity === 'severe'
+                                    ? 'bg-red-100 text-red-900 border-red-300'
+                                    : cue.severity === 'moderate'
+                                    ? 'bg-amber-100 text-amber-900 border-amber-300'
+                                    : 'bg-slate-100 text-slate-800 border-slate-200'
+                                }`}
+                              >
+                                <span className="uppercase text-[10px] font-bold">{cue.tag}</span>
+                                <span className="opacity-80 font-normal">"{cue.quote}"</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Transcript */}
+                      {vn.transcript && (
+                        <div className="text-[11px] text-slate-600 bg-slate-100/70 p-2.5 rounded border border-slate-200 font-hindi">
+                          <span className="font-bold text-slate-700 font-sans">Transcript:</span> "{vn.transcript}"
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+
           <div className="space-y-4">
-            {senior.history90Days.slice(-10).reverse().filter(d => d.callNote).map((d, cIdx) => {
+            {history90Days.slice(-10).reverse().filter(d => d.callNote).map((d, cIdx) => {
               const note = d.callNote!;
               return (
                 <div 
@@ -920,7 +1205,7 @@ export const SeniorDetail: React.FC = () => {
           </h2>
 
           <div className="relative pl-6 border-l-2 border-slate-200 space-y-6">
-            {senior.history90Days.slice(-14).reverse().map((d, tIdx) => (
+            {history90Days.slice(-14).reverse().map((d, tIdx) => (
               <div key={tIdx} className="relative">
                 <div className={`absolute -left-[31px] top-1 w-4 h-4 rounded-md border-2 border-white shadow-2xs ${
                   d.urgency === 'critical' ? 'bg-red-600' : d.urgency === 'moderate' ? 'bg-amber-500' : 'bg-teal-600'

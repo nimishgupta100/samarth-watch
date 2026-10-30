@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Design Tokens: Calm healthcare palette inspired by soft clinic aesthetics */
+    --color-forest: #1F4D3F;
+    --color-forest-dark: #173B30;
+    --color-sage: #6E9A82;
+    --color-mint: #EEF5F1;
+    --color-mint-deep: #E2EEE7;
+    --color-cream: #FAFCFA;
+    --color-border: #D5E4DB;
+    --color-text: #14261F;
+    --color-text-muted: #4A5F55;
+
+    /* Semantic urgency and alert tokens */
+    --color-alert-red: #DC2626;
+    --color-alert-amber: #B45309;
+    --color-alert-green: #15803D;
+
+    /* Compatibility variables */
+    --background: 145 20% 95%;
+    --foreground: 153 31% 11%;
+    --card: 120 20% 99%;
+    --card-foreground: 153 31% 11%;
+    --popover: 120 20% 99%;
+    --popover-foreground: 153 31% 11%;
+    --primary: 163 42% 21%;
+    --primary-foreground: 120 20% 99%;
+    --border: 146 18% 87%;
+    --input: 146 18% 87%;
+    --ring: 163 42% 21%;
+    --radius: 0.5rem;
+  }
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--color-mint);
+  color: var(--color-text);
+  min-height: 100vh;
+  min-height: 100dvh;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Hindi Devanagari font with generous line height for upper and lower matras */
+.font-hindi {
+  font-family: 'Noto Sans Devanagari', 'Plus Jakarta Sans', sans-serif;
+  line-height: 1.6;
+}
+
+/* Tap targets and remove tap delay */
+button, a, input, select, textarea {
+  touch-action: manipulation;
+}
+
+/* Prevent mobile auto-zoom on input focus */
+@media (max-width: 640px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Safe area insets */
+.pt-safe {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.pl-safe {
+  padding-left: max(0.75rem, env(safe-area-inset-left));
+}
+.pr-safe {
+  padding-right: max(0.75rem, env(safe-area-inset-right));
+}
+
+/* Frosted glass utility strictly for login card with solid fallback */
+.frosted-login-card {
+  background-color: #FAFCFA; /* solid fallback for browsers without backdrop-filter */
+}
+@supports (backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px)) {
+  .frosted-login-card {
+    background-color: rgba(250, 252, 250, 0.92);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+}
+
+/* Motion preference respect */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Clean scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #EEF5F1;
+}
+::-webkit-scrollbar-thumb {
+  background: #D5E4DB;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6E9A82;
+}

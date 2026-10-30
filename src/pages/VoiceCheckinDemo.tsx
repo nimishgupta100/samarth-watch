@@ -114,10 +114,10 @@ export const VoiceCheckinDemo: React.FC = () => {
     <div className={`max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-6 ${highContrast ? 'bg-black text-white' : ''}`}>
       
       {/* Header & Accessibility Controls */}
-      <div className={`rounded-2xl p-5 sm:p-6 border shadow-2xs ${
+      <div className={`rounded-3xl p-6 sm:p-8 border shadow-2xl backdrop-blur-md ${
         highContrast 
           ? 'bg-slate-900 border-yellow-400 text-white' 
-          : 'bg-white border-slate-200'
+          : 'bg-white/95 border-slate-100/20 text-slate-900'
       }`}>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -140,7 +140,7 @@ export const VoiceCheckinDemo: React.FC = () => {
                 setLang(nextLang);
                 showToast(`Switched interface language to ${nextLang === 'hi' ? 'Hindi' : 'English'}`, 'info');
               }}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300"
+              className="min-h-[44px] px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300"
             >
               <Languages className="w-3.5 h-3.5" />
               <span>Language: {lang === 'hi' ? 'हिंदी (Hindi)' : 'English'}</span>
@@ -151,7 +151,7 @@ export const VoiceCheckinDemo: React.FC = () => {
                 setHighContrast(!highContrast);
                 showToast(`High contrast mode ${!highContrast ? 'enabled' : 'disabled'}`, 'info');
               }}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300"
+              className="min-h-[44px] px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300"
             >
               <Eye className="w-3.5 h-3.5" />
               <span>{highContrast ? 'Standard Contrast' : 'High Contrast Mode'}</span>
@@ -294,7 +294,7 @@ export const VoiceCheckinDemo: React.FC = () => {
         {/* Right Column: Voice Note Audio Equalizer & Live Speech-to-Text NLP Extraction */}
         <div className="lg:col-span-7 space-y-6">
           
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs">
+          <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-slate-100/20 shadow-2xl">
             <div className="flex items-center justify-between gap-4 mb-3">
               <div>
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">

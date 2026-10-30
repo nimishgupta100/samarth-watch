@@ -95,41 +95,47 @@ export type RecommendedAction =
 export interface Senior {
   id: string;
   name: string;
-  age: number;
-  gender: 'Female' | 'Male';
-  city: string;
-  area: string;
-  avatarSeed: string;
+  age?: number;
+  gender?: 'Female' | 'Male';
+  city?: string;
+  address?: string;
+  doctor?: string;
+  languagePreference?: 'hi' | 'en';
+  area?: string;
+  avatarSeed?: string;
   phone: string;
-  emergencyContactName: string;
-  emergencyContactPhone: string;
-  emergencyContactRelation: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelation?: string;
   assignedCoordinatorId: string;
   assignedCoordinatorName: string;
-  livingSituation: 'Living alone' | 'With spouse only' | 'With domestic help' | 'With family';
-  primaryContext: string; // Non-diagnostic context (e.g. "Known history of hypertension & mild knee stiffness")
+  livingSituation?: string;
+  primaryContext?: string; // Non-diagnostic context
   familyConsentGranted: boolean;
-  linkedFamilyName: string;
-  linkedFamilyRelation: string;
-  linkedFamilyPhone: string;
-  baseline: SeniorBaseline;
-  history90Days: DayRecord[];
+  detailedVitalsConsent?: boolean;
+  locationSharing?: 'emergency_only' | 'live' | 'do_not_share';
+  linkedFamilyIds?: string[];
+  linkedFamilyName?: string;
+  linkedFamilyRelation?: string;
+  linkedFamilyPhone?: string;
+  baseline?: SeniorBaseline;
+  history90Days?: DayRecord[];
   
   // Current active status (Today)
-  currentRiskScore: number;
+  currentRiskScore?: number;
   currentUrgency: UrgencyLevel;
-  daysSinceBaselineShift: number;
-  topReasons: string[];
-  recommendedAction: RecommendedAction;
-  recommendedScript: {
+  daysSinceBaselineShift?: number;
+  topReasons?: string[];
+  recommendedAction?: RecommendedAction;
+  recommendedScript?: {
     hindi: string;
     english: string;
   };
-  scoreBreakdown: DailyScoreBreakdown;
-  activeSignals: SignalType[];
-  alertStatus: 'pending' | 'done' | 'snoozed';
-  feedback: 'useful' | 'not_useful' | null;
-  trend14Days: number[]; // 14 daily scores
+  scoreBreakdown?: DailyScoreBreakdown;
+  activeSignals?: SignalType[];
+  alertStatus?: 'pending' | 'done' | 'snoozed';
+  feedback?: 'useful' | 'not_useful' | null;
+  trend14Days?: number[]; // 14 daily scores
 }
 
 export type UserRole = 'coordinator' | 'manager' | 'family';

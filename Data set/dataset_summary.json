@@ -1,0 +1,47 @@
+{
+  "source_file": "archive.zip/healthcare_dataset.csv",
+  "total_source_rows": 55500,
+  "age_60plus_source_rows": 21148,
+  "age_60plus_after_exact_duplicate_removal": 20948,
+  "age_range_60plus": [
+    60,
+    89
+  ],
+  "demo_profiles": 200,
+  "demo_observation_days": 90,
+  "simulated_observation_rows": 18000,
+  "planted_synthetic_decline_cases": 12,
+  "medical_conditions_60plus": {
+    "Diabetes": 3528,
+    "Hypertension": 3516,
+    "Asthma": 3510,
+    "Cancer": 3504,
+    "Arthritis": 3483,
+    "Obesity": 3407
+  },
+  "admission_types_60plus": {
+    "Urgent": 7006,
+    "Emergency": 6974,
+    "Elective": 6968
+  },
+  "test_results_60plus": {
+    "Abnormal": 7034,
+    "Inconclusive": 6972,
+    "Normal": 6942
+  },
+  "source_columns_excluded": [
+    "Name",
+    "Doctor",
+    "Hospital",
+    "Insurance Provider",
+    "Billing Amount",
+    "Room Number"
+  ],
+  "important_limitations": [
+    "Source rows are hospital admission records, not verified unique people",
+    "No real daily home monitoring vitals, medication adherence, voice notes, personal baseline, or clinical outcome labels",
+    "All 90-day time series, check-in notes, medication confirmations, and planted decline cases are synthetic",
+    "Medical conditions and medicine names are not sufficient to infer prescribing appropriateness or diagnosis",
+    "This dataset cannot validate real-world clinical performance"
+  ]
+}
