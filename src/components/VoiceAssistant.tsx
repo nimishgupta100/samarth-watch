@@ -303,6 +303,8 @@ export const VoiceAssistant: React.FC = () => {
     };
   }, []);
 
+  const isSeniorHome = location.pathname.startsWith('/senior-home');
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <>
@@ -314,8 +316,9 @@ export const VoiceAssistant: React.FC = () => {
           aria-label="Open voice assistant"
           style={{
             position: 'fixed',
-            right: '20px',
-            bottom: '20px',
+            left: isSeniorHome ? '20px' : 'auto',
+            right: isSeniorHome ? 'auto' : '20px',
+            bottom: isSeniorHome ? '96px' : '20px',
             zIndex: 9998,
             width: '60px',
             height: '60px',
@@ -341,8 +344,9 @@ export const VoiceAssistant: React.FC = () => {
           aria-label="Voice assistant"
           style={{
             position: 'fixed',
-            right: '16px',
-            bottom: '16px',
+            left: isSeniorHome ? '16px' : 'auto',
+            right: isSeniorHome ? 'auto' : '16px',
+            bottom: isSeniorHome ? '96px' : '16px',
             zIndex: 9999,
             width: 'min(370px, calc(100vw - 24px))',
             maxHeight: '82vh',

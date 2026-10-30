@@ -55,6 +55,7 @@ import { bandConnectionManager } from '../wearables/BandConnectionManager';
 import { LocationCollector, LocationSharingChoice } from '../utils/locationService';
 import { LanguageSelector } from '../components/common/LanguageSelector';
 import { BLESmartWatchScanner } from '../components/wearable/BLESmartWatchScanner';
+import { N8nChatWidget } from '../components/N8nChatWidget';
 
 type SeniorScreen =
   | 'language_picker'
@@ -548,6 +549,8 @@ Sent automatically via Samarth Watch (5s SOS Auto-Dispatch)`;
 
   return (
     <div className={`min-h-screen ${bgClass} antialiased flex flex-col justify-between selection:bg-[#1C3F32] selection:text-white`}>
+      {/* n8n AI Chat Widget — floats bottom-right for senior portal */}
+      <N8nChatWidget language={language} />
       {/* Centred Column (640-720px on laptop, full width on phone) */}
       <div className="max-w-[700px] mx-auto w-full px-4 sm:px-6 py-6 space-y-5 pb-36">
 
