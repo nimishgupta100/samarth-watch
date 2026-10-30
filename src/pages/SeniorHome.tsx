@@ -1864,16 +1864,16 @@ export const SeniorHome: React.FC = () => {
               <h2 className={headingClass}>{t.actionTalkCoordinator}</h2>
               <div className="p-4 rounded-xl bg-[#FAF8F5] border border-[#CBDCD2] space-y-1">
                 <div className="text-[22px] font-bold">{selectedSenior.assignedCoordinatorName || 'Nimish Gupta'}</div>
-                <div className="text-[18px] text-[#4A6B5D]">Dedicated Care Coordinator</div>
+                <div className="text-[18px] text-[#4A6B5D]">Dedicated Care Coordinator • +91 9368059741</div>
               </div>
 
               <div className="space-y-3">
                 <a
-                  href={`tel:${coordinatorProfile?.phone || '917452009877'}`}
+                  href={`tel:${coordinatorProfile?.phone || '9368059741'}`}
                   className="w-full min-h-[72px] rounded-2xl bg-[#1C3F32] text-white font-bold text-[22px] flex items-center justify-center gap-2"
                 >
                   <Phone className="w-6 h-6" />
-                  <span>Call Coordinator Directly</span>
+                  <span>Call Coordinator (+91 9368059741)</span>
                 </a>
 
                 <button

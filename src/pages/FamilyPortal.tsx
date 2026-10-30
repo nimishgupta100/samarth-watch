@@ -1571,14 +1571,21 @@ export const FamilyPortal: React.FC = () => {
           {/* TAB 5: MESSAGES */}
           {activeTab === 'messages' && (
             <div className="max-w-2xl mx-auto bg-cream border border-border rounded-2xl shadow-xs overflow-hidden flex flex-col h-[70vh]">
-              <div className="p-4 bg-mint-deep border-b border-border flex items-center justify-between">
+              <div className="p-4 bg-mint-deep border-b border-border flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3">
                   <InitialsAvatar name={coordinatorProfile?.name || 'Nimish Gupta'} size="md" />
                   <div>
                     <h3 className="text-sm font-bold text-ink">{coordinatorProfile?.name || 'Nimish Gupta'}</h3>
-                    <p className="text-xs text-ink-muted">Care Coordinator for {senior.name}</p>
+                    <p className="text-xs text-ink-muted">Care Coordinator • +91 9368059741</p>
                   </div>
                 </div>
+                <a
+                  href={`tel:${coordinatorProfile?.phone || '9368059741'}`}
+                  className="min-h-[38px] px-3.5 py-1.5 rounded-lg bg-forest text-cream text-xs font-bold inline-flex items-center gap-1.5 shadow-xs hover:bg-forest/90 transition-colors"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>Call Coordinator</span>
+                </a>
               </div>
 
               {/* Chat Thread */}
@@ -1669,21 +1676,54 @@ export const FamilyPortal: React.FC = () => {
           {activeTab === 'settings' && (
             <div className="max-w-xl mx-auto space-y-5">
               <div className="bg-cream border border-border rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-                <h2 className="text-lg font-bold text-forest">Family Settings</h2>
+                <h2 className="text-lg font-bold text-forest">Care Circle & Contact Details</h2>
 
                 <div className="space-y-3">
-                  <div className="p-3 bg-white rounded-xl border border-border flex items-center justify-between">
+                  {/* Coordinator Tile */}
+                  <div className="p-3.5 bg-white rounded-xl border border-border flex items-center justify-between">
                     <div>
-                      <div className="text-xs font-bold text-ink">Language</div>
-                      <div className="text-[11px] text-ink-muted">English and Hindi supported</div>
+                      <div className="text-xs font-bold text-ink">Care Coordinator: {coordinatorProfile?.name || 'Nimish Gupta'}</div>
+                      <div className="text-[11px] text-ink-muted">Phone: +91 9368059741</div>
                     </div>
-                    <span className="text-xs font-bold text-forest">Active</span>
+                    <a
+                      href={`tel:${coordinatorProfile?.phone || '9368059741'}`}
+                      className="px-3 py-1.5 rounded-lg bg-mint-deep text-forest text-xs font-bold border border-border hover:bg-mint flex items-center gap-1"
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                      <span>Call</span>
+                    </a>
+                  </div>
+
+                  {/* Senior Tile */}
+                  <div className="p-3.5 bg-white rounded-xl border border-border flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-bold text-ink">Senior Citizen: {senior.name}</div>
+                      <div className="text-[11px] text-ink-muted">Phone: +91 7452009877</div>
+                    </div>
+                    <a
+                      href={`tel:${senior.phone || '7452009877'}`}
+                      className="px-3 py-1.5 rounded-lg bg-mint-deep text-forest text-xs font-bold border border-border hover:bg-mint flex items-center gap-1"
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                      <span>Call</span>
+                    </a>
+                  </div>
+
+                  {/* Family Member Tile */}
+                  <div className="p-3.5 bg-white rounded-xl border border-border flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-bold text-ink">Registered Family Member: Karishma</div>
+                      <div className="text-[11px] text-ink-muted">Phone: +91 8765789433 • Primary Contact</div>
+                    </div>
+                    <span className="text-[10px] font-bold text-alert-green bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      Verified
+                    </span>
                   </div>
 
                   <div className="p-3 bg-white rounded-xl border border-border flex items-center justify-between">
                     <div>
-                      <div className="text-xs font-bold text-ink">Emergency Alerts</div>
-                      <div className="text-[11px] text-ink-muted">Direct SMS & In-app SOS notices</div>
+                      <div className="text-xs font-bold text-ink">Emergency SOS Dispatch</div>
+                      <div className="text-[11px] text-ink-muted">Direct SMS & in-app SOS dispatches active for +91 8765789433</div>
                     </div>
                     <span className="text-xs font-bold text-alert-green">Enabled</span>
                   </div>

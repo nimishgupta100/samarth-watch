@@ -29,6 +29,7 @@ export interface SeniorRecord {
   phone: string;
   assignedCoordinatorId: string;
   assignedCoordinatorName: string;
+  assignedCoordinatorPhone?: string;
   linkedFamilyIds: string[];
   linkedFamilyName: string;
   linkedFamilyPhone: string;
@@ -216,7 +217,7 @@ export const INITIAL_SEED_DATA: AppStateData = {
       role: 'coordinator',
       name: 'Nimish Gupta',
       username: 'nimishgupta100',
-      phone: '', // Not added yet
+      phone: '9368059741',
       passwordHash: COORDINATOR_PASSWORD_HASH,
       passwordSalt: PASSWORD_SALT,
       createdAt: 1730000000000,
@@ -245,6 +246,7 @@ export const INITIAL_SEED_DATA: AppStateData = {
       phone: '7452009877',
       assignedCoordinatorId: 'user-coordinator-nimish',
       assignedCoordinatorName: 'Nimish Gupta',
+      assignedCoordinatorPhone: '9368059741',
       linkedFamilyIds: ['user-family-karishma'],
       linkedFamilyName: 'Karishma',
       linkedFamilyPhone: '8765789433',

@@ -42,7 +42,7 @@ export const CoordinatorSettingsPage: React.FC = () => {
   const { showToast } = useToast();
 
   const [name, setName] = useState(coordinatorProfile?.name || currentUser?.name || 'Nimish Gupta');
-  const [phone, setPhone] = useState(coordinatorProfile?.phone || '9876543210');
+  const [phone, setPhone] = useState(coordinatorProfile?.phone || '9368059741');
   const [phoneError, setPhoneError] = useState('');
   const [showResetModal, setShowResetModal] = useState(false);
   const { triggerScenario } = useWearable('senior-kamla-001');
@@ -122,7 +122,7 @@ export const CoordinatorSettingsPage: React.FC = () => {
                 setPhoneError('');
               }}
               className="w-full min-h-[44px] px-3.5 py-2.5 rounded-lg border border-border bg-white text-base sm:text-sm text-ink focus:outline-none focus:ring-2 focus:ring-forest"
-              placeholder="e.g. 9876543210"
+              placeholder="e.g. 9368059741"
             />
             {phoneError && (
               <p className="text-xs text-alert-red font-semibold mt-1">{phoneError}</p>

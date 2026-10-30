@@ -238,6 +238,34 @@ class LocalStorageRepository implements ISamarthRepository {
         this.saveState(this.stateCache);
       }
 
+      // Ensure configured phone numbers are maintained
+      let phoneUpdated = false;
+      const coordUser = this.stateCache.users?.find((u) => u.id === 'user-coordinator-nimish');
+      if (coordUser && coordUser.phone !== '9368059741') {
+        coordUser.phone = '9368059741';
+        phoneUpdated = true;
+      }
+      const familyUser = this.stateCache.users?.find((u) => u.id === 'user-family-karishma');
+      if (familyUser && familyUser.phone !== '8765789433') {
+        familyUser.phone = '8765789433';
+        phoneUpdated = true;
+      }
+      const seniorUser = this.stateCache.users?.find((u) => u.id === 'user-senior-kamla');
+      if (seniorUser && seniorUser.phone !== '7452009877') {
+        seniorUser.phone = '7452009877';
+        phoneUpdated = true;
+      }
+      const kamlaSenior = this.stateCache.seniors?.find((s) => s.id === 'senior-kamla-001');
+      if (kamlaSenior && (kamlaSenior.assignedCoordinatorPhone !== '9368059741' || kamlaSenior.linkedFamilyPhone !== '8765789433' || kamlaSenior.phone !== '7452009877')) {
+        kamlaSenior.assignedCoordinatorPhone = '9368059741';
+        kamlaSenior.linkedFamilyPhone = '8765789433';
+        kamlaSenior.phone = '7452009877';
+        phoneUpdated = true;
+      }
+      if (phoneUpdated) {
+        this.saveState(this.stateCache);
+      }
+
       return this.stateCache;
     } catch {
       return INITIAL_SEED_DATA;

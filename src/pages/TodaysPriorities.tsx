@@ -86,7 +86,7 @@ export const TodaysPriorities: React.FC = () => {
 
   // Coord form
   const [coordName, setCoordName] = useState(coordinatorProfile?.name || 'Nimish Gupta');
-  const [coordPhone, setCoordPhone] = useState(coordinatorProfile?.phone || '');
+  const [coordPhone, setCoordPhone] = useState(coordinatorProfile?.phone || '9368059741');
 
   // Senior form
   const [seniorAge, setSeniorAge] = useState<string>(selectedSenior?.age ? String(selectedSenior.age) : '');
