@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 // ─── Samarth Watch route + contact config ───────────────────────────────────
 const SETTINGS = {
@@ -243,7 +244,40 @@ export const VoiceAssistant: React.FC = () => {
       return;
     }
 
-    // Unrecognised
+    // Fallback: Ask Samarth AI via Supabase Edge Function
+    if (supabase) {
+      setMessage(lang === 'hi' ? 'समर्थ सोच रहा है...' : 'Samarth is thinking...');
+      supabase.functions
+        .invoke('samarth-voice', {
+          body: {
+            message: raw,
+          },
+        })
+        .then(({ data, error }: any) => {
+          if (error) throw error;
+          const reply = String(data?.reply ?? data?.message ?? '');
+          if (reply) {
+            speak(reply);
+          } else {
+            speak(
+              lang === 'hi'
+                ? 'माफ़ करें, मुझे यह नहीं समझ आया। "मदद" बोलें।'
+                : 'Sorry, I did not understand. Say "help" to hear available commands.'
+            );
+          }
+        })
+        .catch((err: any) => {
+          console.warn('Supabase samarth-voice invoke error:', err);
+          speak(
+            lang === 'hi'
+              ? 'नमस्ते! मैं समर्थ AI हूँ। आपकी क्या सहायता करूँ?'
+              : 'Hello! I am Samarth AI assistant. How may I help you?'
+          );
+        });
+      return;
+    }
+
+    // Unrecognised without Supabase
     speak(
       lang === 'hi'
         ? 'माफ़ करें, मुझे यह नहीं समझ आया। "मदद" बोलें।'
