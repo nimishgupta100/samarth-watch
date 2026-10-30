@@ -66,9 +66,6 @@ export const VoiceAssistant: React.FC = () => {
     if (storedLang) setLang(storedLang);
   }, []);
 
-  // Don't render on hidden paths
-  if (HIDDEN_ON_PATHS.includes(location.pathname)) return null;
-
   // ── Speech output ──────────────────────────────────────────────────────────
   function speak(text: string) {
     setMessage(text);
@@ -304,6 +301,9 @@ export const VoiceAssistant: React.FC = () => {
   }, []);
 
   const isSeniorHome = location.pathname.startsWith('/senior-home');
+
+  // Don't render on hidden paths (placed after all hooks to strictly satisfy React Rules of Hooks)
+  if (HIDDEN_ON_PATHS.includes(location.pathname)) return null;
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
