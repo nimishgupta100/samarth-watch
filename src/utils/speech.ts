@@ -4,6 +4,10 @@ import { normalizeForSpeech } from '../lib/speech/normalizeForSpeech';
 const LANG_CODE_MAP: Record<SupportedLanguage, string> = {
   hi: 'hi-IN',
   en: 'en-IN',
+  bn: 'bn-IN',
+  mr: 'mr-IN',
+  ta: 'ta-IN',
+  te: 'te-IN',
 };
 
 /**

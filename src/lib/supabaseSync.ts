@@ -4,7 +4,15 @@
  * synchronized in real-time. Fails gracefully if offline.
  */
 import { createClient } from '@supabase/supabase-js';
-import type { HealthReadingRecord, CheckInRecord, AppNotificationRecord, DoseRecord, SosEventRecord } from '../data/schema';
+import type { 
+  HealthReadingRecord, 
+  CheckInRecord, 
+  AppNotificationRecord, 
+  DoseRecord, 
+  SosEventRecord,
+  VoiceNoteRecord,
+  ChatMessageRecord
+} from '../data/schema';
 
 const SUPABASE_URL = 'https://efjoibtgufriebdfaltb.supabase.co';
 // Secret key allows bypassing RLS so all roles can sync seamlessly
@@ -152,10 +160,64 @@ export const supabaseSync = {
     }
   },
 
+  async pushVoiceNote(v: VoiceNoteRecord): Promise<void> {
+    if (!supabase) return;
+    try {
+      await supabase.from('checkin_notes').insert([{
+        senior_id: v.seniorId,
+        date: new Date(v.timestamp).toISOString().slice(0, 10),
+        language: 'hi',
+        note_text: JSON.stringify({
+          syncType: 'VOICE_NOTE',
+          id: v.id,
+          seniorId: v.seniorId,
+          coordinatorId: v.coordinatorId,
+          timestamp: v.timestamp,
+          durationSeconds: v.durationSeconds,
+          transcript: v.transcript,
+          plainSummary: v.plainSummary,
+          cueTags: v.cueTags,
+          isHighPriority: v.isHighPriority,
+        }),
+        input_mode: 'simulated_text_not_voice',
+        data_origin: 'live_sync',
+      }]);
+    } catch (e) {
+      console.warn('Supabase pushVoiceNote error:', e);
+    }
+  },
+
+  async pushChatMessage(m: ChatMessageRecord): Promise<void> {
+    if (!supabase) return;
+    try {
+      await supabase.from('checkin_notes').insert([{
+        senior_id: m.seniorId,
+        date: new Date(m.timestamp).toISOString().slice(0, 10),
+        language: 'hi',
+        note_text: JSON.stringify({
+          syncType: 'CHAT_MESSAGE',
+          id: m.id,
+          seniorId: m.seniorId,
+          senderRole: m.senderRole,
+          senderName: m.senderName,
+          text: m.text,
+          timestamp: m.timestamp,
+        }),
+        input_mode: 'simulated_text_not_voice',
+        data_origin: 'live_sync',
+      }]);
+    } catch (e) {
+      console.warn('Supabase pushChatMessage error:', e);
+    }
+  },
+
   async pullRecentUpdates(): Promise<{
     readings?: any[];
     notifications?: any[];
     doses?: any[];
+    voiceNotes?: any[];
+    chatMessages?: any[];
+    sosEvents?: any[];
   } | null> {
     if (!supabase) return null;
     try {
@@ -165,11 +227,14 @@ export const supabaseSync = {
         .select('*')
         .eq('data_origin', 'live_sync')
         .order('id', { ascending: false })
-        .limit(60);
+        .limit(80);
 
       const doses: any[] = [];
       const notifications: any[] = [];
       const readings: any[] = [];
+      const voiceNotes: any[] = [];
+      const chatMessages: any[] = [];
+      const sosEvents: any[] = [];
 
       if (syncRows && syncRows.length > 0) {
         for (const row of syncRows) {
@@ -182,6 +247,12 @@ export const supabaseSync = {
               notifications.push(parsed);
             } else if (parsed.syncType === 'HEALTH_READING') {
               readings.push(parsed);
+            } else if (parsed.syncType === 'VOICE_NOTE') {
+              voiceNotes.push(parsed);
+            } else if (parsed.syncType === 'CHAT_MESSAGE') {
+              chatMessages.push(parsed);
+            } else if (parsed.syncType === 'SOS_EVENT') {
+              sosEvents.push(parsed);
             }
           } catch {
             // quiet ignore non-json
@@ -193,6 +264,9 @@ export const supabaseSync = {
         readings,
         notifications,
         doses,
+        voiceNotes,
+        chatMessages,
+        sosEvents,
       };
     } catch {
       return null;

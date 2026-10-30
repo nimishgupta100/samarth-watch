@@ -207,16 +207,45 @@ export const SeniorHome: React.FC = () => {
   // Location warning confirm step for 'do_not_share'
   const [confirmDoNotShare, setConfirmDoNotShare] = useState(false);
 
-  // SOS Countdown for 60s accidental cancellation
-  const [sosCountdown, setSosCountdown] = useState<number>(60);
+  // SOS Countdown for 5s accidental cancellation & Auto WhatsApp Location
+  const [sosCountdown, setSosCountdown] = useState<number>(5);
+  const [whatsappSent, setWhatsappSent] = useState<boolean>(false);
+  const whatsappDispatchedRef = useRef<boolean>(false);
+
+  const getWhatsAppSosUrl = (target: 'coordinator' | 'family' = 'coordinator') => {
+    const phone = target === 'coordinator' ? '919368059741' : '918765789433';
+    const locUrl = 'https://maps.google.com/?q=26.8467,80.9462';
+    const text = `🚨 *EMERGENCY SOS ALERT!*
+${selectedSenior?.name || 'Kamla Devi'} needs immediate emergency assistance!
+📍 *Live Location:* ${locUrl} (Gomti Nagar, Lucknow)
+📞 *Senior Phone:* ${selectedSenior?.phone || '+91 7452009877'}
+⏰ *Alert Time:* ${new Date().toLocaleTimeString()}
+Sent automatically via Samarth Watch (5s SOS Auto-Dispatch)`;
+    return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+  };
+
   useEffect(() => {
     let timer: any = null;
     if (screen === 'sos_informed') {
-      setSosCountdown(60);
+      setSosCountdown(5);
+      setWhatsappSent(false);
+      whatsappDispatchedRef.current = false;
+
       timer = setInterval(() => {
         setSosCountdown((prev) => {
           if (prev <= 1) {
             clearInterval(timer);
+            // 5 seconds elapsed! Auto-dispatch WhatsApp location without requiring any button clicks
+            if (!whatsappDispatchedRef.current) {
+              whatsappDispatchedRef.current = true;
+              setWhatsappSent(true);
+              const waUrl = getWhatsAppSosUrl('coordinator');
+              try {
+                window.open(waUrl, '_blank');
+              } catch (e) {
+                console.warn('Auto open whatsapp blocked or error:', e);
+              }
+            }
             return 0;
           }
           return prev - 1;
@@ -397,6 +426,10 @@ export const SeniorHome: React.FC = () => {
   };
 
   const handleFinishCheckin = (withVoice = true) => {
+    if (isRecording) {
+      handleStopRecording();
+    }
+
     saveCheckinAnswers({
       q1: answers.q1 || 1,
       q2: answers.q2 || 1,
@@ -404,8 +437,8 @@ export const SeniorHome: React.FC = () => {
       q4: answers.q4 || 1,
     });
 
-    if (withVoice && hasRecordedVoice) {
-      addSeniorVoiceNote(recordSeconds || 15, audioBlobUrl || null);
+    if (withVoice) {
+      addSeniorVoiceNote(recordSeconds > 0 ? recordSeconds : 15, audioBlobUrl || null);
     }
     setScreen('thank_you');
   };
@@ -890,7 +923,7 @@ export const SeniorHome: React.FC = () => {
                   <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/40 shadow-sm shrink-0 bg-teal-950 flex items-center justify-center">
                     <img
                       src="/images/doctor-male.jpg"
-                      alt="Dr. K. S. Ramanathan"
+                      alt="Dr. Johan Janson"
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -900,7 +933,7 @@ export const SeniorHome: React.FC = () => {
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
                     </div>
                     <div className="text-[17px] sm:text-[18px] text-teal-200">
-                      Dr. K. S. Ramanathan • {language === 'hi' ? 'विशेषज्ञ परामर्श' : 'Specialist Consultation'}
+                      Dr. Johan Janson • {language === 'hi' ? 'विशेषज्ञ परामर्श' : 'Specialist Consultation'}
                     </div>
                   </div>
                 </div>
@@ -1978,10 +2011,20 @@ export const SeniorHome: React.FC = () => {
             </p>
 
             {sosCountdown > 0 ? (
-              <div className="p-5 rounded-2xl bg-[#FFF6E5] border-2 border-[#D9822B] space-y-3">
-                <p className="text-[20px] font-bold text-[#5C3B00]">
-                  If pressed by mistake, cancel within {sosCountdown} seconds:
-                </p>
+              <div className="p-5 rounded-2xl bg-[#FFF6E5] border-2 border-[#D9822B] space-y-4">
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-[#D9822B] text-white flex items-center justify-center font-bold text-2xl animate-pulse">
+                    {sosCountdown}
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[20px] font-bold text-[#5C3B00] leading-tight">
+                      {language === 'hi' ? 'व्हाट्सएप लोकेशन 5 सेकंड में खुद चली जाएगी' : 'WhatsApp location auto-sends in 5s'}
+                    </p>
+                    <p className="text-[15px] text-[#7A4E00]">
+                      {language === 'hi' ? 'कोई और बटन दबाने की जरूरत नहीं है' : 'No extra button clicks required'}
+                    </p>
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={() => {
@@ -1993,12 +2036,43 @@ export const SeniorHome: React.FC = () => {
                   }}
                   className="w-full min-h-[72px] rounded-xl bg-[#D9822B] hover:bg-[#B3661E] text-white font-bold text-[22px]"
                 >
-                  I pressed this by mistake ({sosCountdown}s)
+                  {language === 'hi' ? `गलती से दबा - रद्द करें (${sosCountdown}s)` : `I pressed this by mistake (${sosCountdown}s)`}
                 </button>
               </div>
             ) : (
-              <div className="p-5 rounded-2xl bg-[#EBF3EE] border border-[#2E6B56] text-[#132A22] font-bold text-[22px]">
-                Help is on the way. Please keep your phone near you.
+              <div className="space-y-4">
+                <div className="p-5 rounded-2xl bg-[#EBF3EE] border-2 border-[#2E6B56] text-[#132A22] space-y-2">
+                  <div className="flex items-center justify-center gap-2 text-[#2E6B56] font-bold text-[24px]">
+                    <Check className="w-7 h-7" />
+                    <span>{language === 'hi' ? 'WhatsApp पर लोकेशन भेज दी गई है!' : 'WhatsApp Location Dispatched!'}</span>
+                  </div>
+                  <p className="text-[17px] text-[#2E4A3F]">
+                    {language === 'hi'
+                      ? 'Care Coordinator (+91 9368059741) को आपकी लाइव लोकेशन सफलतापूर्वक भेज दी गई है।'
+                      : 'Live Google Maps location automatically sent to Care Coordinator (+91 9368059741).'}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <a
+                    href={getWhatsAppSosUrl('coordinator')}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-h-[64px] rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white font-bold text-[19px] flex items-center justify-center gap-2 px-4 shadow-sm"
+                  >
+                    <Phone className="w-5 h-5" />
+                    <span>{language === 'hi' ? 'व्हाट्सएप चैट देखें' : 'Open WhatsApp'}</span>
+                  </a>
+                  <a
+                    href={getWhatsAppSosUrl('family')}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-h-[64px] rounded-xl bg-white border-2 border-[#25D366] text-[#128C7E] hover:bg-[#EBF3EE] font-bold text-[19px] flex items-center justify-center gap-2 px-4"
+                  >
+                    <Phone className="w-5 h-5" />
+                    <span>{language === 'hi' ? 'परिवार को भी भेजें' : 'Send to Family'}</span>
+                  </a>
+                </div>
               </div>
             )}
 

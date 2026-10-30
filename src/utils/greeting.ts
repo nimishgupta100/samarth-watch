@@ -19,6 +19,26 @@ const GREETINGS: Record<SupportedLanguage, Record<TimeOfDay, string>> = {
     afternoon: 'नमस्ते',
     evening: 'शुभ संध्या',
   },
+  bn: {
+    morning: 'সুপ্রভাত',
+    afternoon: 'নমস্কার',
+    evening: 'শুভ সন্ধ্যা',
+  },
+  mr: {
+    morning: 'शुभ सकाळ',
+    afternoon: 'शुभ दुपार',
+    evening: 'शुभ संध्याकाळ',
+  },
+  ta: {
+    morning: 'காலை வணக்கம்',
+    afternoon: 'மதிய வணக்கம்',
+    evening: 'மாலை வணக்கம்',
+  },
+  te: {
+    morning: 'శుభోదయం',
+    afternoon: 'శుభ మధ్యాహ్నం',
+    evening: 'శుభ సాయంత్రం',
+  },
 };
 
 /**
@@ -79,6 +99,26 @@ export function getTimeOfDayLabel(lang: SupportedLanguage): string {
       morning: 'सुबह',
       afternoon: 'दोपहर',
       evening: 'शाम',
+    },
+    bn: {
+      morning: 'সকাল',
+      afternoon: 'দুপুর',
+      evening: 'সন্ধ্যা',
+    },
+    mr: {
+      morning: 'सकाळ',
+      afternoon: 'दुपार',
+      evening: 'संध्याकाळ',
+    },
+    ta: {
+      morning: 'காலை',
+      afternoon: 'மதியம்',
+      evening: 'மாலை',
+    },
+    te: {
+      morning: 'ఉదయం',
+      afternoon: 'మధ్యాహ్నం',
+      evening: 'సాయంత్రం',
     },
   };
   return labels[lang]?.[tod] || labels.en[tod];

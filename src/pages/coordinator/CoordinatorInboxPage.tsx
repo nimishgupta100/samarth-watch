@@ -27,6 +27,7 @@ export const CoordinatorInboxPage: React.FC = () => {
   const {
     t,
     voiceNotes,
+    chatMessages,
     roleNotifications,
     markNotificationRead,
     seniors,
@@ -79,9 +80,23 @@ export const CoordinatorInboxPage: React.FC = () => {
       });
     });
 
+    // Family Chat Messages
+    chatMessages.forEach((msg) => {
+      const senior = seniors.find((s) => s.id === msg.seniorId) || seniors[0];
+      list.push({
+        id: `chat-${msg.id}`,
+        kind: 'family',
+        senderName: msg.senderRole === 'family' ? `${senior?.linkedFamilyName || 'Karishma (Daughter)'}` : (msg.senderName || 'Coordinator'),
+        title: `Chat: ${msg.senderName || 'Karishma'} (${senior?.name || 'Senior'})`,
+        preview: msg.text,
+        timestamp: msg.timestamp,
+        isRead: true,
+      });
+    });
+
     // Sort newest first
     return list.sort((a, b) => b.timestamp - a.timestamp);
-  }, [voiceNotes, roleNotifications, seniors]);
+  }, [voiceNotes, chatMessages, roleNotifications, seniors]);
 
   // Filter items
   const filteredItems = useMemo(() => {

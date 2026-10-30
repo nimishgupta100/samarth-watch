@@ -32,7 +32,7 @@ export interface DoctorProfile {
 export const SAMPLE_DOCTORS: DoctorProfile[] = [
   {
     id: 'doc-001',
-    name: 'Dr. K. S. Ramanathan',
+    name: 'Dr. Johan Janson',
     specialty: 'Senior Geriatrician & Physician',
     rating: 5.0,
     reviewsCount: 124,

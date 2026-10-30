@@ -259,6 +259,7 @@ export interface TranslationDictionary {
   greetingMorning: string;
   greetingAfternoon: string;
   greetingEvening: string;
+  greetingNight?: string;
 
   // Login page
   loginTitle: string;

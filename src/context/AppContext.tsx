@@ -11,7 +11,7 @@ import {
 } from '../types/shared';
 import { SupportedLanguage, getTranslation, TranslationDictionary } from '../i18n';
 import { repository } from '../data/repository';
-import { SeniorRecord, Medicine, User } from '../data/schema';
+import { SeniorRecord, Medicine, User, ChatMessageRecord } from '../data/schema';
 import { 
   COHORT_SENIORS, 
   getCohortSenior, 
@@ -143,6 +143,10 @@ interface AppContextType {
   addSeniorVoiceNote: (durationSec: number, audioBlobUrl: string | null) => Promise<void>;
   todayCheckinAnswer: { q1?: number; q2?: number; q3?: number; q4?: number } | null;
   saveCheckinAnswers: (answers: { q1: number; q2: number; q3: number; q4: number }) => void;
+
+  // Direct Two-Way In-App Chat
+  chatMessages: ChatMessageRecord[];
+  sendChatMessage: (text: string, senderRole?: 'family' | 'coordinator') => void;
 
   // Notification Center
   notifications: AppNotification[];
@@ -506,6 +510,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       actionLabel: n.actionLabel,
     }));
   }, [selectedSenior.id, repoRevision]);
+
+  // 12b. Chat Messages (Two-Way In-App Chat)
+  const chatMessages: ChatMessageRecord[] = useMemo(() => {
+    return repository.getChatMessages(selectedSenior.id);
+  }, [selectedSenior.id, repoRevision]);
+
+  const sendChatMessage = (text: string, senderRole?: 'family' | 'coordinator') => {
+    const role = senderRole || (activeRole === 'coordinator' ? 'coordinator' : 'family');
+    const senderName = role === 'coordinator'
+      ? (coordinatorProfile?.name || 'Nimish Gupta (Care Coordinator)')
+      : (selectedSenior.linkedFamilyName || 'Karishma (Daughter)');
+    repository.addChatMessage({
+      seniorId: selectedSenior.id,
+      senderRole: role,
+      senderName,
+      text: text.trim(),
+    });
+  };
 
   // Filter role notifications for active role/session
   const roleNotifications = useMemo(() => {
@@ -1157,6 +1179,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addSeniorVoiceNote,
         todayCheckinAnswer,
         saveCheckinAnswers,
+        chatMessages,
+        sendChatMessage,
         notifications,
         roleNotifications,
         unreadNotificationCount,

@@ -74,4 +74,8 @@ export const ABBREVIATIONS_HI: AbbreviationRule[] = [
 export const DICTIONARIES: Record<SupportedLanguage, AbbreviationRule[]> = {
   en: ABBREVIATIONS_EN,
   hi: ABBREVIATIONS_HI,
+  bn: ABBREVIATIONS_EN,
+  mr: ABBREVIATIONS_HI,
+  ta: ABBREVIATIONS_EN,
+  te: ABBREVIATIONS_EN,
 };

@@ -18,6 +18,7 @@ import {
   SosEventRecord,
   AppNotificationRecord,
   MedicineChangeRequestRecord,
+  ChatMessageRecord,
 } from './schema';
 import { supabaseSync } from '../lib/supabaseSync';
 
@@ -63,6 +64,8 @@ export interface ISamarthRepository {
   getChangeRequests(seniorId?: string): MedicineChangeRequestRecord[];
   addChangeRequest(req: Omit<MedicineChangeRequestRecord, 'id' | 'createdAt' | 'status'>): MedicineChangeRequestRecord;
   reviewChangeRequest(id: string, status: 'approved' | 'rejected', reviewer: string): MedicineChangeRequestRecord;
+  getChatMessages(seniorId?: string): ChatMessageRecord[];
+  addChatMessage(msg: Omit<ChatMessageRecord, 'id' | 'timestamp'>): ChatMessageRecord;
   subscribe(listener: () => void): () => void;
 }
 
@@ -195,6 +198,70 @@ class LocalStorageRepository implements ISamarthRepository {
               confirmedBy: remConfirmedBy,
               confirmedTimestamp: remConfirmedTs,
             });
+            changed = true;
+          }
+        }
+      }
+
+      // Merge remote voice notes
+      if (updates.voiceNotes && updates.voiceNotes.length > 0) {
+        for (const rem of updates.voiceNotes) {
+          if (!state.voiceNotes.some((v) => v.id === rem.id)) {
+            state.voiceNotes.unshift({
+              id: rem.id,
+              seniorId: rem.seniorId,
+              coordinatorId: rem.coordinatorId || 'user-coordinator-nimish',
+              timestamp: rem.timestamp || Date.now(),
+              durationSeconds: rem.durationSeconds || 15,
+              transcript: rem.transcript || '',
+              plainSummary: rem.plainSummary || '',
+              cueTags: rem.cueTags || [],
+              isHighPriority: Boolean(rem.isHighPriority),
+            });
+            changed = true;
+          }
+        }
+      }
+
+      // Merge remote chat messages
+      if (updates.chatMessages && updates.chatMessages.length > 0) {
+        if (!state.chatMessages) state.chatMessages = [];
+        for (const rem of updates.chatMessages) {
+          if (!state.chatMessages.some((m) => m.id === rem.id)) {
+            state.chatMessages.push({
+              id: rem.id,
+              seniorId: rem.seniorId,
+              senderRole: rem.senderRole,
+              senderName: rem.senderName,
+              text: rem.text,
+              timestamp: rem.timestamp || Date.now(),
+            });
+            changed = true;
+          }
+        }
+      }
+
+      // Merge remote SOS events
+      if (updates.sosEvents && updates.sosEvents.length > 0) {
+        for (const rem of updates.sosEvents) {
+          const localSos = state.sosEvents.find((s) => s.id === rem.id);
+          if (!localSos) {
+            state.sosEvents.unshift({
+              id: rem.id,
+              seniorId: rem.seniorId,
+              seniorName: rem.seniorName || 'Kamla Devi',
+              timestamp: rem.timestamp || Date.now(),
+              status: rem.status || 'Active',
+              cancelledBySenior: Boolean(rem.cancelledBySenior),
+              cancelledAt: rem.cancelledAt,
+              location: rem.location,
+              notes: rem.notes,
+            });
+            changed = true;
+          } else if (localSos.status !== rem.status) {
+            localSos.status = rem.status;
+            localSos.cancelledBySenior = Boolean(rem.cancelledBySenior);
+            localSos.cancelledAt = rem.cancelledAt;
             changed = true;
           }
         }
@@ -537,6 +604,7 @@ class LocalStorageRepository implements ISamarthRepository {
     };
     state.voiceNotes.unshift(newNote);
     this.saveState(state);
+    supabaseSync.pushVoiceNote(newNote);
     return newNote;
   }
 
@@ -692,6 +760,27 @@ class LocalStorageRepository implements ISamarthRepository {
     req.reviewedBy = reviewer;
     this.saveState(state);
     return req;
+  }
+
+  // --- Two-Way Direct In-App Chat Messages ---
+  public getChatMessages(seniorId?: string): ChatMessageRecord[] {
+    const list = this.getState().chatMessages || [];
+    if (seniorId) return list.filter((m) => m.seniorId === seniorId);
+    return list;
+  }
+
+  public addChatMessage(msg: Omit<ChatMessageRecord, 'id' | 'timestamp'>): ChatMessageRecord {
+    const state = this.getState();
+    if (!state.chatMessages) state.chatMessages = [];
+    const newMsg: ChatMessageRecord = {
+      ...msg,
+      id: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      timestamp: Date.now(),
+    };
+    state.chatMessages.push(newMsg);
+    this.saveState(state);
+    supabaseSync.pushChatMessage(newMsg);
+    return newMsg;
   }
 }
 

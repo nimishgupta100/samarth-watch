@@ -84,6 +84,8 @@ export const FamilyPortal: React.FC = () => {
     cancelAppointment,
     voiceNotes,
     healthReadings,
+    chatMessages,
+    sendChatMessage,
     activeSosEvent,
     coordinatorProfile,
     todayCheckinAnswer,
@@ -127,15 +129,7 @@ export const FamilyPortal: React.FC = () => {
   const [apptSlot, setApptSlot] = useState<string>('10:00 AM');
   const [apptNotes, setApptNotes] = useState('');
 
-  // Messages state (Section 5.5)
-  const [chatMessages, setChatMessages] = useState<Array<{ id: string; sender: 'family' | 'coordinator'; text: string; time: string }>>([
-    {
-      id: 'm1',
-      sender: 'coordinator',
-      text: 'Good morning Karishma! Kamla ji had breakfast on time and her morning routine is smooth. All vital readings are within her normal baseline.',
-      time: '08:45 AM',
-    },
-  ]);
+  // Messages input state (Section 5.5)
   const [messageInput, setMessageInput] = useState('');
 
   // Report state (Section 5.6)
@@ -209,13 +203,7 @@ export const FamilyPortal: React.FC = () => {
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageInput.trim()) return;
-    const newMsg = {
-      id: `m-${Date.now()}`,
-      sender: 'family' as const,
-      text: messageInput.trim(),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-    setChatMessages((prev) => [...prev, newMsg]);
+    sendChatMessage(messageInput.trim(), 'family');
     setMessageInput('');
     showToast('Message sent to coordinator', 'success');
   };
@@ -1594,23 +1582,38 @@ export const FamilyPortal: React.FC = () => {
 
               {/* Chat Thread */}
               <div className="flex-1 p-4 overflow-y-auto space-y-3">
-                {chatMessages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex flex-col ${msg.sender === 'family' ? 'items-end' : 'items-start'}`}
-                  >
-                    <div
-                      className={`max-w-[85%] p-3.5 rounded-xl text-xs sm:text-sm leading-relaxed ${
-                        msg.sender === 'family'
-                          ? 'bg-forest text-cream'
-                          : 'bg-white text-ink border border-border'
-                      }`}
-                    >
-                      {msg.text}
-                    </div>
-                    <span className="text-[10px] text-ink-muted mt-1 px-1">{msg.time}</span>
+                {chatMessages.length === 0 ? (
+                  <div className="text-center py-12 text-ink-muted text-xs">
+                    No messages yet. Send a message to Nimish Gupta (Care Coordinator).
                   </div>
-                ))}
+                ) : (
+                  chatMessages.map((msg) => {
+                    const isFamily = msg.senderRole === 'family';
+                    const timeStr = msg.timestamp
+                      ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : '';
+                    return (
+                      <div
+                        key={msg.id}
+                        className={`flex flex-col ${isFamily ? 'items-end' : 'items-start'}`}
+                      >
+                        <span className="text-[10px] font-semibold text-ink-muted px-1 mb-0.5">
+                          {isFamily ? 'You (Karishma)' : (msg.senderName || 'Coordinator')}
+                        </span>
+                        <div
+                          className={`max-w-[85%] p-3.5 rounded-xl text-xs sm:text-sm leading-relaxed ${
+                            isFamily
+                              ? 'bg-forest text-cream rounded-br-none'
+                              : 'bg-white text-ink border border-border rounded-bl-none shadow-2xs'
+                          }`}
+                        >
+                          {msg.text}
+                        </div>
+                        <span className="text-[10px] text-ink-muted mt-1 px-1">{timeStr}</span>
+                      </div>
+                    );
+                  })
+                )}
               </div>
 
               {/* Message Input Box */}
