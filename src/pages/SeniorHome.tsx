@@ -81,6 +81,7 @@ type SeniorScreen =
 export const SeniorHome: React.FC = () => {
   const {
     selectedSenior,
+    addLocationReading,
     language,
     setLanguage,
     t,
@@ -274,6 +275,7 @@ Sent automatically via Samarth Watch (5s SOS Auto-Dispatch)`;
   useEffect(() => {
     const sharingChoice = (selectedSenior?.locationSharing as LocationSharingChoice) || 'emergency_only';
     const collector = new LocationCollector(selectedSenior.id, sharingChoice);
+    collector.onReading(addLocationReading);
     locationCollectorRef.current = collector;
 
     if (sharingChoice === 'live') {
@@ -283,7 +285,7 @@ Sent automatically via Samarth Watch (5s SOS Auto-Dispatch)`;
     return () => {
       collector.destroy();
     };
-  }, [selectedSenior.id, selectedSenior?.locationSharing]);
+  }, [selectedSenior.id, selectedSenior?.locationSharing, addLocationReading]);
 
   // Speech Handler
   const handleReadAloud = (text: string) => {

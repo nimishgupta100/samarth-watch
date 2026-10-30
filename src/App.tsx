@@ -84,68 +84,6 @@ class ErrorBoundary extends Component<
   }
 }
 
-/**
- * One-time boot-time data health check.
- * Clears invalid/stale session data so old browser state never blocks login.
- * Called once synchronously before React mounts.
- */
-function runBootHealthCheck(): void {
-  try {
-    // 1. If auth session has a role that no longer exists or is malformed, purge it.
-    const rawSession = localStorage.getItem('samarth_auth_session') || sessionStorage.getItem('samarth_auth_session');
-    if (rawSession) {
-      const parsed = JSON.parse(rawSession);
-      const validRoles = ['coordinator', 'senior', 'family', 'manager'];
-      if (!parsed?.role || !validRoles.includes(parsed.role)) {
-        sessionStorage.removeItem('samarth_auth_session');
-        localStorage.removeItem('samarth_auth_session');
-        localStorage.removeItem('samarth_user_role');
-      } else {
-        // Keep both storages synchronized
-        sessionStorage.setItem('samarth_auth_session', rawSession);
-        localStorage.setItem('samarth_auth_session', rawSession);
-        localStorage.setItem('samarth_user_role', parsed.role);
-      }
-    }
-
-    // 2. Keep role state synchronized
-    const lsRole = localStorage.getItem('samarth_user_role');
-    const sessionRole = rawSession ? (() => { try { return JSON.parse(rawSession)?.role; } catch { return null; } })() : null;
-    if (lsRole && sessionRole && lsRole !== sessionRole) {
-      localStorage.setItem('samarth_user_role', sessionRole);
-    }
-  } catch {
-    // If anything fails, clean slate is safer than a crash.
-    try { sessionStorage.removeItem('samarth_auth_session'); } catch { /* ignore */ }
-    try { localStorage.removeItem('samarth_auth_session'); } catch { /* ignore */ }
-    try { localStorage.removeItem('samarth_user_role'); } catch { /* ignore */ }
-  }
-}
-
-// Run once at module load time before React renders.
-runBootHealthCheck();
-
-/**
- * Root redirect: sends authenticated users to their home, unauthenticated to /login.
- * Session is stored in localStorage / sessionStorage (see AuthContext SESSION_KEY).
- */
-const RootRedirect: React.FC = () => {
-  const session = localStorage.getItem('samarth_auth_session') || sessionStorage.getItem('samarth_auth_session');
-  if (!session) return <Navigate to="/login" replace />;
-  try {
-    const user = JSON.parse(session);
-    const map: Record<string, string> = {
-      coordinator: '/coordinator',
-      manager: '/ops',
-      senior: '/senior-home',
-      family: '/family',
-    };
-    return <Navigate to={map[user.role] || '/login'} replace />;
-  } catch {
-    return <Navigate to="/login" replace />;
-  }
-};
-
 export function App() {
   return (
     <ErrorBoundary>

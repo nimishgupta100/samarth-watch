@@ -11,14 +11,13 @@ import {
   Languages, 
   Lock, 
   PhoneCall, 
-  CheckCircle2, 
   AlertCircle,
   Sparkles
 } from 'lucide-react';
 
 export const FamilySummary: React.FC = () => {
   useDocumentTitle('Family Weekly Summary');
-  const { selectedSenior, toggleConsent, seniors, setCurrentSeniorId } = useApp();
+  const { selectedSenior, seniors, setCurrentSeniorId } = useApp();
   const { showToast } = useToast();
   const [lang, setLang] = useState<'en' | 'hi'>('en');
 
@@ -38,11 +37,6 @@ export const FamilySummary: React.FC = () => {
     const nextLang = lang === 'en' ? 'hi' : 'en';
     setLang(nextLang);
     showToast(`Weekly summary language set to ${nextLang === 'hi' ? 'Hindi' : 'English'}`, 'info');
-  };
-
-  const handleReenableConsent = () => {
-    toggleConsent(selectedSenior.id, true);
-    showToast(`Simulated resident consent re-activation for ${selectedSenior.name}. Family portal is now unlocked.`, 'success');
   };
 
   return (
@@ -112,15 +106,9 @@ export const FamilySummary: React.FC = () => {
             Under Samarth's <em>Senior Autonomy Privacy Charter</em>, <strong>{selectedSenior.name}</strong> retains full discretion over what gets shared with family members. Routine health logs and coordinator check-in details are currently private to their assigned Care Coordinator.
           </p>
 
-          <div className="pt-3">
-            <button
-              onClick={handleReenableConsent}
-              className="px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold rounded-lg shadow-2xs transition-colors inline-flex items-center gap-1.5"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Simulate Resident Re-enabling Consent</span>
-            </button>
-          </div>
+          <p className="pt-3 text-xs text-slate-500">
+            The senior can update sharing preferences from their own account.
+          </p>
         </div>
       ) : (
         /* ACTIVE CONSENT */

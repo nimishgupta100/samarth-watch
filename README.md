@@ -97,7 +97,8 @@ The dataset is generated via a reproducible seeded pseudo-random engine (`src/da
 - **Icons:** Lucide React
 - **Data Visualization:** Recharts (ComposedChart, AreaChart, LineChart, BarChart, PieChart) + Custom SVG Sparklines
 - **Routing:** React Router v6
-- **State Management:** React Context API with LocalStorage persistence for demo actions
+- **State Management:** React Context API with a LocalStorage demo cache and authenticated Supabase event sync
+- **Authentication & access:** Supabase Auth (password for staff, SMS OTP for seniors/families) with profile-backed roles and PostgreSQL row-level security
 
 ---
 
@@ -116,10 +117,56 @@ cd samarth-watch
 # Install dependencies
 npm install
 
+# Configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in a local .env file
 # Start development server
 npm run dev
 ```
 Open your browser at `http://localhost:5173/` to explore the dashboard.
+
+### Supabase backend setup
+1. Copy `.env.example` to `.env` and set the project URL and publishable/anon key. These two `VITE_` values are public client configuration; never put a service-role key in a `VITE_` variable.
+2. In the Supabase SQL Editor, run `scripts/supabase_full_schema.sql`, then `scripts/supabase_backend.sql`. The old open prototype policies are removed; the backend migration enables authenticated, profile-based RLS.
+3. Configure and enable the SMS provider under **Authentication → Providers → Phone**. Set the project redirect URLs under **Authentication → URL Configuration**.
+4. Create an accounts JSON file outside version control and provision accounts with `node scripts/provisionSupabaseUsers.mjs <accounts.json>`. Staff accounts require a username and a strong password; senior/family accounts require an Indian mobile number. Use `linkedSeniorId` to link a family/senior profile to the corresponding `senior_profiles.id`. The matching senior profile must assign coordinators using their `legacyUserId`.
+5. Keep `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY` only in the trusted local/server environment used for provisioning. The provisioner reads `.env` and `scripts/hello.env`. Do not commit a server key, publish it, or add it to any `VITE_` variable. If a service key was previously included in a frontend build, rotate it in Supabase before deploying.
+
+Example account file shape (replace all values; do not commit real account data):
+```json
+[
+  {
+    "role": "coordinator",
+    "name": "Coordinator Name",
+    "username": "careteam",
+    "password": "replace-with-a-unique-strong-password",
+    "legacyUserId": "coordinator-record-id"
+  },
+  {
+    "role": "senior",
+    "name": "Senior Name",
+    "phone": "9876543210",
+    "legacyUserId": "senior-user-record-id",
+    "linkedSeniorId": "senior-record-id",
+    "assignedCoordinatorId": "coordinator-record-id",
+    "assignedCoordinatorName": "Coordinator Name",
+    "linkedFamilyIds": ["family-user-record-id"],
+    "linkedFamilyName": "Family Name",
+    "linkedFamilyPhone": "9876543211",
+    "familyConsentGranted": false,
+    "detailedVitalsConsent": false
+  },
+  {
+    "role": "family",
+    "name": "Family Name",
+    "phone": "9876543211",
+    "legacyUserId": "family-user-record-id",
+    "linkedSeniorId": "senior-record-id"
+  }
+]
+```
+
+Authenticated users have separate local caches and load their authorized senior profiles and existing records from Supabase. App changes are appended to `app_sync_events`; a per-account browser outbox retries pending writes, and the client fetches permitted event history in pages before polling from its last event ID. Row-level policies scope records by role, senior assignment, family consent, detailed-vitals consent, and location-sharing preference. Consent changes are written through a senior-only database function; the family portal cannot grant consent on the senior's behalf.
+
+The local demo seed and synthetic evaluation cohort are not used as fallback records for authenticated sessions. The browser cache remains an offline/UI cache, not the source of truth. Wearable connection state and simulator readings remain device-local; continuous background collection and vendor-cloud integrations still require a separately deployed mobile/backend integration. These migrations and SMS-provider settings must be applied in your Supabase project before real accounts can use the backend.
 
 ### Production Build
 ```bash

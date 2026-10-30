@@ -34,7 +34,7 @@ test('Role-Selection Login Page Architecture', async (t) => {
   await t.test('Redirects each role to their respective authenticated dashboard', () => {
     assert.ok(loginPage.includes("roleHomePath('coordinator')"), 'Routes coordinator to coordinator home');
     assert.ok(loginPage.includes("roleHomePath('manager')"), 'Routes ops manager to manager home (/ops)');
-    assert.ok(loginPage.includes("roleHomePath(role as"), 'Routes verified OTP role to correct home');
+    assert.ok(loginPage.includes('roleHomePath(res.role)'), 'Routes verified OTP role to correct home');
   });
 
   await t.test('Complies with security constraints: no leaked credentials, generic error', () => {

@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS public.senior_profiles (
     linked_family_ids TEXT[],
     linked_family_name TEXT,
     linked_family_phone TEXT,
-    family_consent_granted BOOLEAN DEFAULT true,
+    family_consent_granted BOOLEAN DEFAULT false,
     detailed_vitals_consent BOOLEAN DEFAULT false,
     location_sharing TEXT DEFAULT 'emergency_only',
     emergency_contact_name TEXT,
@@ -243,7 +243,7 @@ CREATE TABLE IF NOT EXISTS public.band_connection_log (
 );
 
 -- ────────────────────────────────────────────────────────────
--- ROW LEVEL SECURITY (public read, service-role write)
+-- ROW LEVEL SECURITY (deny access until the secure backend migration is applied)
 -- ────────────────────────────────────────────────────────────
 DO $$
 DECLARE t TEXT;
@@ -255,13 +255,7 @@ BEGIN
     'location_readings','notifications','band_connection_log'
   ] LOOP
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
-    BEGIN
-      EXECUTE format(
-        'CREATE POLICY "public_read_%s" ON public.%I FOR SELECT USING (true)', t, t);
-    EXCEPTION WHEN duplicate_object THEN NULL; END;
-    BEGIN
-      EXECUTE format(
-        'CREATE POLICY "service_write_%s" ON public.%I FOR ALL USING (true)', t, t);
-    EXCEPTION WHEN duplicate_object THEN NULL; END;
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', 'public_read_' || t, t);
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', 'service_write_' || t, t);
   END LOOP;
 END $$;

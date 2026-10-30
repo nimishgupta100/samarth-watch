@@ -46,10 +46,7 @@ apk/checksums.txt
 
 # Supabase scripts (contain keys — keep local only)
 scripts/uploadToSupabase.mjs
-
 .env
 .env.*
 !.env.example
 scripts/.env
-.vercel
-*.zip

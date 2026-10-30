@@ -60,24 +60,17 @@ CREATE TABLE IF NOT EXISTS public.checkin_notes (
     data_origin TEXT
 );
 
--- Enable RLS & policies for public read/service write
-ALTER TABLE public.senior_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.planted_decline_scenarios ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.daily_observations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.medication_events ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.checkin_notes ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Allow public read senior_profiles" ON public.senior_profiles FOR SELECT USING (true);
-CREATE POLICY "Allow service insert senior_profiles" ON public.senior_profiles FOR ALL USING (true);
-
-CREATE POLICY "Allow public read planted_decline_scenarios" ON public.planted_decline_scenarios FOR SELECT USING (true);
-CREATE POLICY "Allow service insert planted_decline_scenarios" ON public.planted_decline_scenarios FOR ALL USING (true);
-
-CREATE POLICY "Allow public read daily_observations" ON public.daily_observations FOR SELECT USING (true);
-CREATE POLICY "Allow service insert daily_observations" ON public.daily_observations FOR ALL USING (true);
-
-CREATE POLICY "Allow public read medication_events" ON public.medication_events FOR SELECT USING (true);
-CREATE POLICY "Allow service insert medication_events" ON public.medication_events FOR ALL USING (true);
-
-CREATE POLICY "Allow public read checkin_notes" ON public.checkin_notes FOR SELECT USING (true);
-CREATE POLICY "Allow service insert checkin_notes" ON public.checkin_notes FOR ALL USING (true);
+-- Enable RLS and remove the old public policies. Access is configured by
+-- supabase_backend.sql once Supabase Auth profiles have been provisioned.
+DO $$
+DECLARE t TEXT;
+BEGIN
+  FOREACH t IN ARRAY ARRAY[
+    'senior_profiles', 'planted_decline_scenarios', 'daily_observations',
+    'medication_events', 'checkin_notes'
+  ] LOOP
+    EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', 'Allow public read ' || t, t);
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', 'Allow service insert ' || t, t);
+  END LOOP;
+END $$;

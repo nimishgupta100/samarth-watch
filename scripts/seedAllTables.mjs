@@ -18,9 +18,14 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import 'dotenv/config';
 
-const SUPABASE_URL = 'https://efjoibtgufriebdfaltb.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY;
+const SUPABASE_URL = process.env.https://efjoibtgufriebdfaltb.supabase.co;
+const SUPABASE_KEY = process.env.sb_publishable_ri0OKQ_8Fm3nZpxFvH0THA_UtcqOMca;
+
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  throw new Error('Missing Supabase environment variables');
+}
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: false }

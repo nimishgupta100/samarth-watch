@@ -2,17 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
-
-// Helper to hash password matching client-side implementation
-function hashPassword(password, salt) {
-  return crypto.createHash('sha256').update(`${salt}:${password}`).digest('hex');
-}
 
 // Indian mobile normalization matching AuthContext
 function normalizeIndianPhone(input) {
@@ -30,18 +24,10 @@ test('Step 1: Schema Version and Pristine Initial Seed Data', async (t) => {
     assert.match(schemaFile, /export const DATA_VERSION = 2;/);
   });
 
-  await t.test('Demo OTP constant is set to 4321', () => {
-    assert.match(schemaFile, /export const DEMO_OTP = '4321';/);
-  });
-
-  await t.test('Coordinator password hash is salted SHA-256 of nimish200', () => {
-    const saltMatch = schemaFile.match(/export const PASSWORD_SALT = '([^']+)';/);
-    const hashMatch = schemaFile.match(/export const COORDINATOR_PASSWORD_HASH = '([^']+)';/);
-    assert.ok(saltMatch, 'PASSWORD_SALT found in schema');
-    assert.ok(hashMatch, 'COORDINATOR_PASSWORD_HASH found in schema');
-
-    const expectedHash = hashPassword('nimish200', saltMatch[1]);
-    assert.equal(hashMatch[1], expectedHash, 'Hash matches salted SHA-256 of nimish200');
+  await t.test('No demo credentials are shipped to the browser', () => {
+    assert.ok(!schemaFile.includes('DEMO_OTP'));
+    assert.ok(!schemaFile.includes('PASSWORD_SALT'));
+    assert.ok(!schemaFile.includes('COORDINATOR_PASSWORD_HASH'));
   });
 
   await t.test('Initial seed has exactly 3 users and 1 senior record', () => {
@@ -129,7 +115,7 @@ test('Step 3: Isolated Evaluation Cohort for Hackathon Score Protection', (t) =>
   assert.ok(pageContent.includes('../evaluation/evaluationData'), 'ModelEvaluation page imports from isolated evaluation directory');
 });
 
-test('Step 4: Phone Normalization and Authentication Logic', async (t) => {
+test('Step 4: Phone Normalization and Supabase Authentication', async (t) => {
   await t.test('Normalizes various Indian phone formats to 10 digits', () => {
     assert.equal(normalizeIndianPhone('7452009877'), '7452009877');
     assert.equal(normalizeIndianPhone('+91 74520 09877'), '7452009877');
@@ -139,14 +125,49 @@ test('Step 4: Phone Normalization and Authentication Logic', async (t) => {
     assert.equal(normalizeIndianPhone('8765-789-433'), '8765789433');
   });
 
-  await t.test('Password verification with salted SHA-256', () => {
-    const salt = 'samarth_salt_2026';
-    const correctHash = hashPassword('nimish200', salt);
-    const wrongHash = hashPassword('wrong_password', salt);
-
-    assert.equal(correctHash, '89aa3efa250e2f3dfbadabff6b81590f5b9a925841796053bd4786452163204c');
-    assert.notEqual(wrongHash, correctHash);
+  await t.test('Uses Supabase Auth and server-backed role profiles', () => {
+    const authContext = fs.readFileSync(path.join(rootDir, 'src/context/AuthContext.tsx'), 'utf8');
+    assert.ok(authContext.includes('signInWithPassword'));
+    assert.ok(authContext.includes('signInWithOtp'));
+    assert.ok(authContext.includes('verifyOtp'));
+    assert.ok(authContext.includes(".from('profiles')"));
+    assert.ok(!authContext.includes('DEMO_OTP'));
   });
+
+  await t.test('Browser Supabase client requires a public environment key only', () => {
+    const client = fs.readFileSync(path.join(rootDir, 'src/lib/supabase.ts'), 'utf8');
+    assert.ok(client.includes('VITE_SUPABASE_URL'));
+    assert.ok(client.includes('VITE_SUPABASE_ANON_KEY'));
+    assert.ok(!client.includes('SERVICE_ROLE'));
+  });
+});
+
+test('Supabase backend schema applies authenticated row-level access', () => {
+  const migration = fs.readFileSync(path.join(rootDir, 'scripts/supabase_backend.sql'), 'utf8');
+  assert.ok(migration.includes('ENABLE ROW LEVEL SECURITY'));
+  assert.ok(migration.includes('app_can_access_senior'));
+  assert.ok(migration.includes('family_consent_granted'));
+  assert.ok(migration.includes('detailed_vitals_consent'));
+  assert.ok(migration.includes('app_sync_events'));
+  assert.ok(!migration.includes('USING (true)'));
+});
+
+test('Authenticated data is isolated, hydrated, and paginated from Supabase', () => {
+  const repository = fs.readFileSync(path.join(rootDir, 'src/data/repository.ts'), 'utf8');
+  const sync = fs.readFileSync(path.join(rootDir, 'src/lib/supabaseSync.ts'), 'utf8');
+  const migration = fs.readFileSync(path.join(rootDir, 'scripts/supabase_backend.sql'), 'utf8');
+
+  assert.ok(repository.includes('setAuthenticatedUser(user: User | null)'));
+  assert.ok(repository.includes('`${STORAGE_KEY}_user_${this.activeUser.id}`'));
+  assert.ok(repository.includes('pullInitialRecords(role)'));
+  assert.ok(sync.includes(".gt('id', cursor)"));
+  assert.ok(sync.includes('.range(offset, offset + pageSize - 1)'));
+  assert.ok(!sync.includes(".limit(500)"));
+  assert.ok(sync.includes('samarth_supabase_outbox_${userId}'));
+  assert.ok(sync.includes("pushEvent('LOCATION_READING'"));
+  assert.ok(migration.includes('update_my_senior_consent'));
+  assert.ok(migration.includes('app_can_read_notification'));
+  assert.match(migration, /Only the senior account can change sharing consent/);
 });
 
 test('Step 5: Login Page Has No Demo Accounts Box and Route Guards Protect Role Access', (t) => {

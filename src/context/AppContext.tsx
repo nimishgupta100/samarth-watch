@@ -11,7 +11,7 @@ import {
 } from '../types/shared';
 import { SupportedLanguage, getTranslation, TranslationDictionary } from '../i18n';
 import { repository } from '../data/repository';
-import { SeniorRecord, Medicine, User, ChatMessageRecord } from '../data/schema';
+import { SeniorRecord, Medicine, User, ChatMessageRecord, LocationReading } from '../data/schema';
 import { 
   COHORT_SENIORS, 
   getCohortSenior, 
@@ -23,22 +23,6 @@ import { voiceNoteSummarizer } from '../utils/voiceNoteSummarizer';
 import { demoWearableSimulator, WearableReading, WearableScenario } from '../utils/wearableProvider';
 import { getCurrentLocation, getLastKnownOrHome } from '../utils/locationService';
 import { useAuth } from './AuthContext';
-
-/** Reads the current user's role from the auth session (localStorage / sessionStorage). */
-function getRoleFromSession(): UserRole | 'senior' {
-  try {
-    const raw = localStorage.getItem('samarth_auth_session') || sessionStorage.getItem('samarth_auth_session');
-    if (raw) {
-      const u = JSON.parse(raw);
-      if (u && u.role) return u.role as UserRole | 'senior';
-    }
-  } catch {
-    // ignore
-  }
-  // Fallback: read from localStorage (legacy key)
-  const saved = localStorage.getItem('samarth_user_role');
-  return (saved as UserRole | 'senior') || 'coordinator';
-}
 
 export interface CoordinatorProfileData {
   name: string;
@@ -62,6 +46,7 @@ interface AppContextType {
   setRole: (role: UserRole | 'senior') => void;
   currentSeniorId: string;
   setCurrentSeniorId: (id: string) => void;
+  addLocationReading: (reading: LocationReading) => void;
   seniors: Senior[];
   selectedSenior: Senior;
   cohortSeniors: CohortSeniorSummary[];
@@ -188,8 +173,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   // 1. Roles & Active Senior
-  const [role, setRoleState] = useState<UserRole | 'senior'>(() => getRoleFromSession());
+  const [role, setRoleState] = useState<UserRole | 'senior'>('coordinator');
   const activeRole: UserRole | 'senior' = currentUser?.role || role;
+
+  useEffect(() => {
+    setRoleState(currentUser?.role || 'coordinator');
+  }, [currentUser]);
 
   const [currentSeniorId, setCurrentSeniorIdState] = useState<string>(() => {
     const saved = localStorage.getItem('samarth_focus_senior_id');
@@ -255,7 +244,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (foundLive) return foundLive;
 
     // 2. Check 200-senior demonstration cohort (e.g. SW001)
-    const cohortProfile = getCohortSenior(currentSeniorId);
+    const cohortProfile = currentUser ? undefined : getCohortSenior(currentSeniorId);
     if (cohortProfile) {
       const observations = getSeniorObservations(cohortProfile.seniorId);
       const history90Days = observations.map((o) => ({
@@ -345,9 +334,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } as Senior;
     }
 
-    // 3. Fallback to first live senior
-    return seniors[0];
-  }, [seniors, currentSeniorId]);
+    // 3. Authenticated accounts must never fall back to another account's demo data.
+    if (seniors[0]) return seniors[0];
+    return {
+      id: currentUser?.linkedSeniorId || 'unassigned-senior',
+      name: currentUser?.role === 'senior' ? currentUser.name : 'No senior assigned',
+      phone: '',
+      assignedCoordinatorId: '',
+      assignedCoordinatorName: '',
+      familyConsentGranted: false,
+      detailedVitalsConsent: false,
+      currentUrgency: 'low',
+      currentRiskScore: 0,
+      alertStatus: 'done',
+      activeSignals: [],
+      topReasons: [],
+      primaryContext: '',
+      history90Days: [],
+      trend14Days: [],
+      scoreBreakdown: {
+        vitalsDeviation: 0,
+        medicationAdherence: 0,
+        nlpCallCues: 0,
+        silencePattern: 0,
+        trendAcceleration: 0,
+      },
+      recommendedScript: { hindi: '', english: '' },
+    } satisfies Senior;
+  }, [seniors, currentSeniorId, currentUser]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    const savedSeniorId = localStorage.getItem(`samarth_focus_senior_id_${currentUser.id}`);
+    const assigned = seniors.find((senior) => senior.id === savedSeniorId)
+      || seniors.find((senior) => senior.id === currentUser.linkedSeniorId)
+      || seniors[0];
+    if (assigned && currentSeniorId !== assigned.id) setCurrentSeniorIdState(assigned.id);
+  }, [currentUser, seniors, currentSeniorId]);
 
   // 2. Language & Accessibility
   const [language, setLanguageState] = useState<SupportedLanguage>(() => {
@@ -550,8 +573,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // 13. Coordinator Profile
   const coordinatorProfile = useMemo(() => {
-    return repository.getUserById('user-coordinator-nimish');
-  }, [repoRevision]);
+    return currentUser?.role === 'coordinator'
+      ? currentUser
+      : !currentUser ? repository.getUserById('user-coordinator-nimish') : undefined;
+  }, [currentUser, repoRevision]);
+
+  const notifyLinkedFamily = (
+    notification: Omit<Parameters<typeof repository.addNotification>[0], 'recipientUserId' | 'targetRole'>,
+  ) => {
+    const recipients = selectedSenior.linkedFamilyIds?.length
+      ? selectedSenior.linkedFamilyIds
+      : currentUser ? [] : ['user-family-karishma'];
+    recipients.forEach((recipientUserId) => {
+      repository.addNotification({ ...notification, recipientUserId, targetRole: 'family' });
+    });
+  };
 
   // 14. Wearable simulator
   const [wearableConnected, setWearableConnected] = useState(false);
@@ -579,13 +615,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Persistent Setters
   const setRole = (newRole: UserRole | 'senior') => {
     setRoleState(newRole);
-    localStorage.setItem('samarth_user_role', newRole);
   };
 
   const setCurrentSeniorId = (newId: string) => {
     setCurrentSeniorIdState(newId);
-    localStorage.setItem('samarth_focus_senior_id', newId);
+    const storageKey = currentUser
+      ? `samarth_focus_senior_id_${currentUser.id}`
+      : 'samarth_focus_senior_id';
+    localStorage.setItem(storageKey, newId);
   };
+
+  const addLocationReading = useCallback((reading: LocationReading) => {
+    repository.addLocationReading(reading);
+  }, []);
 
   const setLanguage = (newLang: SupportedLanguage) => {
     setLanguageState(newLang);
@@ -621,10 +663,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const toggleConsent = (id: string, consent: boolean) => {
+    if (currentUser && currentUser.role !== 'senior') {
+      console.warn('Only the senior account can change family sharing consent.');
+      return;
+    }
     repository.updateSenior(id, { familyConsentGranted: consent });
   };
 
   const toggleDetailedVitalsConsent = (id: string, allow: boolean) => {
+    if (currentUser && currentUser.role !== 'senior') {
+      console.warn('Only the senior account can change detailed-vitals consent.');
+      return;
+    }
     repository.updateSenior(id, { detailedVitalsConsent: allow });
   };
 
@@ -666,8 +716,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const remindSeniorToConnectBand = () => {
     // 1. In-app notification to the Senior
-    repository.addNotification({
-      recipientUserId: 'user-senior-kamla',
+    const seniorUserId = currentUser?.role === 'senior'
+      ? currentUser.id
+      : currentUser ? '' : 'user-senior-kamla';
+    if (seniorUserId) repository.addNotification({
+      recipientUserId: seniorUserId,
       targetRole: 'senior',
       title: 'Please connect your health band',
       message: 'Your family sent a reminder to check and connect your health band.',
@@ -715,9 +768,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // 2. Notify Family
     if (selectedSenior.familyConsentGranted) {
-      repository.addNotification({
-        recipientUserId: 'user-family-karishma',
-        targetRole: 'family',
+      notifyLinkedFamily({
         title: `Medicine Dose Taken: ${selectedSenior.name}`,
         message: `${selectedSenior.name} has taken ${medName} on time.`,
         type: 'medicine_escalation',
@@ -768,9 +819,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const approveMedicineChange = (requestId: string) => {
     repository.reviewChangeRequest(requestId, 'approved', selectedSenior.assignedCoordinatorName);
     // Notify family
-    repository.addNotification({
-      recipientUserId: 'user-family-karishma',
-      targetRole: 'family',
+    notifyLinkedFamily({
       title: 'Medicine Timing Change Approved',
       message: `Care Coordinator ${selectedSenior.assignedCoordinatorName} approved the timing update.`,
       type: 'info',
@@ -782,9 +831,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const rejectMedicineChange = (requestId: string) => {
     repository.reviewChangeRequest(requestId, 'rejected', selectedSenior.assignedCoordinatorName);
     // Notify family
-    repository.addNotification({
-      recipientUserId: 'user-family-karishma',
-      targetRole: 'family',
+    notifyLinkedFamily({
       title: 'Medicine Timing Request Note',
       message: `Care Coordinator ${selectedSenior.assignedCoordinatorName} reviewed the timing request and will consult the prescribing doctor.`,
       type: 'info',
@@ -818,9 +865,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     // Notify linked Family member (Karishma)
-    repository.addNotification({
-      recipientUserId: 'user-family-karishma',
-      targetRole: 'family',
+    notifyLinkedFamily({
       title: `Emergency SOS Help Alert`,
       message: `${selectedSenior.name} pressed the SOS assistance button. Location shared. Care Coordinator is placing a priority call.`,
       type: 'sos',
@@ -859,9 +904,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     // Notify family of false alarm
-    repository.addNotification({
-      recipientUserId: 'user-family-karishma',
-      targetRole: 'family',
+    notifyLinkedFamily({
       title: `SOS Alert Cancelled (False Alarm)`,
       message: `${selectedSenior.name} indicated the SOS button was pressed by mistake within 60s.`,
       type: 'sos',
@@ -906,9 +949,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // Notify family
     if (selectedSenior.familyConsentGranted) {
-      repository.addNotification({
-        recipientUserId: 'user-family-karishma',
-        targetRole: 'family',
+      notifyLinkedFamily({
         title: `Care Visit Requested: ${selectedSenior.name}`,
         message: `${requestedBy === 'senior' ? selectedSenior.name : 'A family member'} requested a ${type} appointment for ${date} (${slot}).`,
         type: 'appointment',
@@ -936,9 +977,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     repository.updateAppointmentStatus(appointmentId, 'confirmed', meetLink);
 
     // Notify family
-    repository.addNotification({
-      recipientUserId: 'user-family-karishma',
-      targetRole: 'family',
+    notifyLinkedFamily({
       title: 'Care Visit Confirmed',
       message: `Coordinator ${selectedSenior.assignedCoordinatorName} confirmed the appointment. Check the calendar in your portal.`,
       type: 'appointment',
@@ -995,9 +1034,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // 2. Notify Family if consent granted
     if (selectedSenior.familyConsentGranted) {
-      repository.addNotification({
-        recipientUserId: 'user-family-karishma',
-        targetRole: 'family',
+      notifyLinkedFamily({
         title: `Health Reading: ${selectedSenior.name}`,
         message: `${selectedSenior.name} logged a new ${typeLabel} reading (${displayVal}).`,
         type: 'reading',
@@ -1041,9 +1078,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // Notify family ONLY IF consent allows
     if (selectedSenior.familyConsentGranted) {
-      repository.addNotification({
-        recipientUserId: 'user-family-karishma',
-        targetRole: 'family',
+      notifyLinkedFamily({
         title: `Morning Check-in Update: ${selectedSenior.name}`,
         message: result.plainSummary,
         type: 'voice_note',
@@ -1093,9 +1128,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // 2. Notify Family if consent granted
     if (selectedSenior.familyConsentGranted) {
-      repository.addNotification({
-        recipientUserId: 'user-family-karishma',
-        targetRole: 'family',
+      notifyLinkedFamily({
         title: `Daily Check-in: ${selectedSenior.name}`,
         message: `${selectedSenior.name} completed today's morning check-in (${wellbeingSummary}).`,
         type: 'info',
@@ -1115,25 +1148,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       activeRole === 'coordinator' || activeRole === 'manager'
         ? selectedSenior.assignedCoordinatorId
         : activeRole === 'family'
-        ? 'user-family-karishma'
-        : 'user-senior-kamla';
+        ? currentUser?.id || 'user-family-karishma'
+        : currentUser?.id || 'user-senior-kamla';
     repository.clearNotifications(recipientId);
   };
 
   // Coordinator Tools (Step 2)
   const updateCoordinatorProfile = (data: CoordinatorProfileData) => {
-    repository.updateUser('user-coordinator-nimish', {
+    const id = currentUser?.role === 'coordinator' ? currentUser.id : 'user-coordinator-nimish';
+    repository.updateUser(id, {
       name: data.name,
       phone: data.phone,
     });
   };
 
   const updateSeniorProfile = (data: Partial<SeniorProfileData>) => {
-    repository.updateSenior('senior-kamla-001', data);
+    repository.updateSenior(selectedSenior.id, data);
   };
 
   const addMedicine = (name: string, instructions: string, scheduledTimes: string[]) => {
-    return repository.addMedicine('senior-kamla-001', name, instructions, scheduledTimes);
+    return repository.addMedicine(selectedSenior.id, name, instructions, scheduledTimes);
   };
 
   const updateMedicine = (id: string, updates: Partial<Medicine>) => {
@@ -1151,9 +1185,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setRole,
         currentSeniorId,
         setCurrentSeniorId,
+        addLocationReading,
         seniors,
         selectedSenior,
-        cohortSeniors: COHORT_SENIORS,
+        cohortSeniors: currentUser ? [] : COHORT_SENIORS,
         language,
         setLanguage,
         t,

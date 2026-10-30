@@ -15,8 +15,12 @@ interface RouteGuardProps {
  *   (e.g., senior cannot access /family, family cannot access /senior-home)
  */
 export const RouteGuard: React.FC<RouteGuardProps> = ({ allowedRole, children }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, isLoading } = useAuth();
   const location = useLocation();
+
+  if (isLoading) {
+    return <div className="min-h-screen" role="status" aria-label="Loading secure session" />;
+  }
 
   if (!currentUser) {
     return <Navigate to="/login" state={{ from: location }} replace />;
